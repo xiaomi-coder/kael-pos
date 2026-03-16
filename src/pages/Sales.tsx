@@ -94,7 +94,36 @@ export const SalesPage = () => {
     // Send Electronic Receipt directly to Customer if they have a Telegram ID
     const customerObj = customers.find(c => c.id === custId);
     if (customerObj && customerObj.tgId && tgBotToken) {
-       const directMsg = `Hurmatli <b>${custName}</b>, xaridingiz uchun rahmat! 🎉\\n\\n📅 Sana: ${today} ${time}\\n\\n📦 Siz xarid qilgan tovarlar:\\n${itemsList}\\n\\n💰 <b>Jami summa: ${fmt(cartTotal)} so'm</b>\\n💵 To'langan summa: ${fmt(paidAmt)} so'm${debtAmt > 0 ? `\\n📋 Nasiya (Qarz): ${fmt(debtAmt)} so'm\\n\\n💡 Eslatma: Sizning umumiy hisobingiz (balans): <b>${fmt(customerObj.balance - debtAmt)} so'm</b>` : ""}\\n\\n<i>KAEL POS orqali yuborildi. Kunning xayrli o'tishini tilaymiz!</i>`;
+       
+       // Calculate 30-day history for the customer
+       const thirtyDaysAgo = new Date();
+       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+       const d30 = thirtyDaysAgo.toISOString().split("T")[0];
+       
+       const custRecentSales = sales.filter(s => s.customerId === custId && s.date >= d30);
+       const bought30 = custRecentSales.reduce((s, c) => s + c.total, 0) + cartTotal;
+       const paid30 = custRecentSales.reduce((s, c) => s + c.paidAmount, 0) + paidAmt;
+
+       const directMsg = `Hurmatli <b>${custName}</b>, xaridingiz uchun rahmat! 🎉
+
+📅 <b>Sana:</b> ${today} ${time}
+
+📦 <b>Siz xarid qilgan tovarlar:</b>
+${itemsList}
+
+💰 <b>MOLIYAVIY HISOB (BUGUN)</b>
+━━━━━━━━━━━━━━━━━━
+<b>Jami summa: ${fmt(cartTotal)} so'm</b>
+💵 To'langan: ${fmt(paidAmt)} so'm
+${debtAmt > 0 ? `📋 Nasiya (Qarzga): ${fmt(debtAmt)} so'm` : ""}
+
+📈 <b>OYLIK STATISTIKANGIZ (Oxirgi 30 kun)</b>
+━━━━━━━━━━━━━━━━━━
+🛍 Umumiy xaridlar: ${fmt(bought30)} so'm
+✅ Qilingan to'lovlar: ${fmt(paid30)} so'm
+${customerObj.balance - debtAmt < 0 ? `❗ <b>Sizning umumiy qarzingiz: ${fmt(Math.abs(customerObj.balance - debtAmt))} so'm</b>\n` : `✨ <b>Umumiy balansingiz: ${fmt(customerObj.balance - debtAmt)} so'm</b>\n`}
+<i>KAEL POS — Boshqaruv Tizimi orqali yuborildi. Kunning xayrli o'tishini tilaymiz!</i>`;
+       
        sendTelegram(tgBotToken, customerObj.tgId, directMsg);
     }
 

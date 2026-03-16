@@ -41,16 +41,49 @@ export const Dashboard = ({ setTab }: DashboardProps) => {
         <div style={{ display: "flex", gap: 12 }}>
           {currentUser?.role === 'admin' && (
             <button style={{ ...S.sBtn, background: T.purple, borderColor: T.purple, color: "#fff", display: "flex", alignItems: "center", gap: 6 }} onClick={() => {
-              const { tgBotToken, tgChatId } = useStorage.getState();
+              const { tgBotToken, tgChatId, sales: allSales } = useStorage.getState();
               if(!tgBotToken || !tgChatId) { alert("Sozlamalardan Telegram Bot Tokerni va Chat ID ni kiriting!"); return; }
               const ts = sumF(todaySales, "total");
               const tp = sumF(todaySales, "profit");
               const tPaid = sumF(todaySales, "paidAmount");
               const tDebtToday = sumF(todaySales, "debtAmount");
-              const tExp = sumF(expenses.filter(e => e.date === today), "amount");
-              const txt = `📅 <b>KUNLIK HISOBOT: ${today}</b>\\n\\n💰 <b>Jami savdo:</b> ${fmt(ts)} so'm\\n     Nasiya: ${fmt(tDebtToday)} so'm\\n     Naqd tushum: ${fmt(tPaid)} so'm\\n\\n💸 <b>Xarajatlar:</b> ${fmt(tExp)} so'm\\n\\n📊 <b>Sof Foyda:</b> ${fmt(tp - tExp)} so'm\\n\\n📦 <i>Kun yakunlandi!</i>`;
+              
+              const expToday = expenses.filter(e => e.date === today);
+              const tExp = sumF(expToday, "amount");
+              
+              // Count payments specifically for debts today where nothing was sold but debt paid (product ID 0)
+              const qarzDaromad = sumF(todaySales.filter(s => s.productId === 0 && s.productName === "Qarz to'lovi"), "paidAmount");
+
+              let itemsSoldTxt = "";
+              const prodsMap = todaySales.filter(s => s.productId !== 0).reduce((acc: any, s) => {
+                if (!acc[s.productName]) acc[s.productName] = { qty: 0, sum: 0 };
+                acc[s.productName].qty += s.qty; acc[s.productName].sum += s.total;
+                return acc;
+              }, {});
+              Object.keys(prodsMap).forEach(k => { itemsSoldTxt += `— ${k}: ${prodsMap[k].qty} ta (${fmt(prodsMap[k].sum)})\n`; });
+
+              let expTxt = "";
+              expToday.forEach(e => { expTxt += `— ${e.categoryLabel || e.category}: ${fmt(e.amount)} (${e.description || 'izohsiz'})\n`; });
+
+              const txt = `📋 <b>KUN YAKUNI HISOBOTI</b>
+📅 <b>Sana:</b> ${today}
+👷 <b>Yopdi:</b> ${currentUser?.name}
+
+💰 <b>MOLIYAVIY HOLAT:</b>
+━━━━━━━━━━━━━━━━━━
+🔹 <b>Umumiy Savdo aylanmasi:</b> ${fmt(ts)} so'm
+💵 <b>Naqd Tushum:</b> ${fmt(tPaid)} so'm
+${qarzDaromad > 0 ? `💳 <i>Shundan eski qarz to'lovlari:</i> ${fmt(qarzDaromad)} so'm\n` : ''}📉 <b>Yangi Nasiya (Qarz):</b> ${fmt(tDebtToday)} so'm
+💸 <b>Xarajatlar:</b> ${fmt(tExp)} so'm
+
+${itemsSoldTxt ? `📦 <b>ENG KO'P SOTILGANLAR:</b>\n━━━━━━━━━━━━━━━━━━\n${itemsSoldTxt}` : ''}
+${expTxt ? `📉 <b>QILINGAN XARAJATLAR:</b>\n━━━━━━━━━━━━━━━━━━\n${expTxt}` : ''}
+📊 <b>SOF FOYDA (KUNLIK):</b> ${fmt(tp - tExp)} so'm
+
+💡 <i>KAEL POS Boshqaruv Tizimi</i>`;
+              
               sendTelegram(tgBotToken, tgChatId, txt);
-              alert("Hisobot Telegram ga muvaffaqiyatli yuborildi!");
+              alert("Batafsil hisobot Asosiy guruh (Admin)ga yuborildi!");
             }}>
               <span style={{ fontSize: 18 }}>✈</span> Kunni yopish
             </button>
