@@ -24,7 +24,13 @@ export const Dashboard = ({ setTab }: DashboardProps) => {
 
   const twR = sumF(thisWeek, "total"), lwR = sumF(lastWeek, "total");
   const twP = sumF(thisWeek, "profit"), lwP = sumF(lastWeek, "profit");
+  
   const todaySales = sales.filter(s => s.date === today);
+  const yesterday = getDateRange(1);
+  const yesterdaySales = sales.filter(s => s.date === yesterday);
+
+  const tdR = sumF(todaySales, "total"), ydR = sumF(yesterdaySales, "total");
+  const tdP = sumF(todaySales, "profit"), ydP = sumF(yesterdaySales, "profit");
 
   const exportSales = (arr: any[], name: string) => {
     const h = ["Sana", "Vaqt", "Mijoz", "Mahsulot", "Soni", "Narx", "Summa", "Naqd", "Qarz", "Turi", "Sotuvchi"];
@@ -108,9 +114,11 @@ ${expTxt ? `📉 <b>QILINGAN XARAJATLAR:</b>\n━━━━━━━━━━━�
       )}
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 14, marginBottom: 20 }}>
+        <StatCard title="Bugungi tushum" value={fmt(tdR)} change={pctCh(tdR, ydR)} color={T.accentDark} icon="☀" />
+        <StatCard title="Bugungi foyda" value={fmt(tdP)} change={pctCh(tdP, ydP)} color={T.greenLight} icon="★" />
         <StatCard title="Haftalik tushum" value={fmt(twR)} change={pctCh(twR, lwR)} color={T.accent} icon="◎" />
         <StatCard title="Haftalik foyda" value={fmt(twP)} change={pctCh(twP, lwP)} color={T.green} icon="△" />
-        <StatCard title="Sotuvlar" value={thisWeek.length + " ta"} color={T.blue} icon="⊕" />
+        <StatCard title="Sotuvlar (Hafta)" value={thisWeek.length + " ta"} color={T.blue} icon="⊕" />
         <StatCard title="Jami qarz" value={fmt(Math.abs(tDebt))} color={T.red} icon="◈" />
         <StatCard title="Oylik xarajat" value={fmt(totalExpThisMonth)} color={T.purple} icon="▣" />
       </div>
