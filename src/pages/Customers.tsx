@@ -16,6 +16,19 @@ export const CustomersPage = () => {
 
   const filtered = search ? customers.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.phone.includes(search)) : customers;
 
+  // Calculate Top Customers
+  const custTotals = sales.reduce((acc: any, s) => {
+    if (!acc[s.customerId]) acc[s.customerId] = 0;
+    acc[s.customerId] += s.total;
+    return acc;
+  }, {});
+
+  const topCustomers = customers
+    .map(c => ({ ...c, totalSpent: custTotals[c.id] || 0 }))
+    .sort((a, b) => b.totalSpent - a.totalSpent)
+    .slice(0, 10)
+    .filter(c => c.totalSpent > 0);
+
   const handleSave = () => {
     if (!form.name || !form.phone) return;
     if (editCust) {
@@ -44,7 +57,29 @@ export const CustomersPage = () => {
         <h2 style={{ margin: 0, fontSize: 28, fontWeight: 800 }}>Mijozlar</h2>
         <button style={S.sBtn} onClick={() => { setEditCust(null); setForm({ name: "", phone: "", address: "", tgId: "" }); setShowModal(true); }}>+ Yangi mijoz</button>
       </div>
-      <input style={{ ...S.sInput, marginBottom: 16, maxWidth: 350 }} placeholder="Mijoz qidirish..." value={search} onChange={e => setSearch(e.target.value)} />
+
+      {/* Top 10 Customers Section */}
+      {topCustomers.length > 0 && !search && (
+        <div style={{ ...S.sCard, marginBottom: 24, padding: "20px" }}>
+          <h3 style={{ margin: "0 0 16px 0", fontSize: 18, color: T.accentDark, display: "flex", alignItems: "center", gap: 8 }}>
+            <span>🏆</span> Eng faol mijozlar (TOP 10)
+          </h3>
+          <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 8, msOverflowStyle: "none", scrollbarWidth: "none" }}>
+            {topCustomers.map((c, i) => (
+              <div key={c.id} style={{ minWidth: 200, padding: 14, background: i === 0 ? T.accentLight : i === 1 ? T.blueLight : i === 2 ? T.greenLight : T.cardAlt, border: `1px solid ${i === 0 ? T.accent : i === 1 ? T.blue : i === 2 ? T.green : T.border}`, borderRadius: 16 }}>
+                <div style={{ fontSize: 24, fontWeight: 900, color: i === 0 ? T.accent : i === 1 ? T.blue : i === 2 ? T.green : T.textM, opacity: 0.8, marginBottom: 6 }}>#{i+1}</div>
+                <div style={{ fontSize: 15, fontWeight: 800, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{c.name}</div>
+                <div style={{ fontSize: 12, color: T.textD, marginTop: 4 }}>Jami xaridi:</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: T.text, marginTop: 2 }}>{fmt(c.totalSpent)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+        <input style={{ ...S.sInput, maxWidth: 350, flex: 1 }} placeholder="Mijoz qidirish..." value={search} onChange={e => setSearch(e.target.value)} />
+      </div>
       
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
         {filtered.map(c => (
