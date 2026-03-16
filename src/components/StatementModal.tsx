@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { T } from '../constants';
 import * as S from '../styles';
-import { fmt, getToday, filterSales, sumF } from '../utils';
+import { fmt, getToday, sumF, sendTelegram } from '../utils';
+import { useStorage } from '../hooks/useStorage';
 
 interface StatementModalProps {
   show: boolean;
@@ -12,6 +13,8 @@ interface StatementModalProps {
 
 export const StatementModal = ({ show, onClose, customer, sales }: StatementModalProps) => {
   const [statementMonths, setStatementMonths] = useState(3);
+  const { tgBotToken } = useStorage();
+  
   if (!show || !customer) return null;
 
   const today = getToday();
@@ -19,6 +22,39 @@ export const StatementModal = ({ show, onClose, customer, sales }: StatementModa
   const fromDate = d.toISOString().split("T")[0];
   const statementSales = sales.filter(s => s.customerId === customer.id && s.date >= fromDate && s.date <= today).sort((a,b) => (a.date+a.time > b.date+b.time ? 1 : -1));
   const tTotal = sumF(statementSales, "total"), tPaid = sumF(statementSales, "paidAmount"), tDebt = sumF(statementSales, "debtAmount");
+
+  const sendStatement = () => {
+    if (!tgBotToken) { alert("Telegram Bot Token sozlanmagan!"); return; }
+    if (!customer.tgId) { alert("Ushbu mijozga Telegram biriktirilmagan! (Mijozlar panelidan kiriting)"); return; }
+
+    let tableStr = "";
+    statementSales.forEach(s => {
+      let t = "";
+      if (s.payType === "naqd") t = `Naqd: ${fmt(s.paidAmount)}`;
+      else if (s.payType === "qarz") t = `Qarz: ${fmt(s.total)}`;
+      else t = `Naqd: ${fmt(s.paidAmount)}, Qarz: ${fmt(s.debtAmount)}`;
+      tableStr += `▪️ ${s.date.slice(5)} ${s.time} | <b>${s.productName}</b>\n   ${s.qty} ta | ${fmt(s.total)} so'm | <i>${t}</i>\n`;
+    });
+
+    const msg = `🧾 <b>MIJOZ HISOB-KITOBI (SVERKA)</b>
+👤 Mijoz: <b>${customer.name}</b>
+📅 Davr: Oxirgi ${statementMonths} oy
+
+💰 <b>MOLIYAVIY XULOSA:</b>
+━━━━━━━━━━━━━━━━━━
+🔹 Jami Xarid: ${fmt(tTotal)} so'm
+✅ To'langan: ${fmt(tPaid)} so'm
+📉 Nasiya (Qarzga): ${fmt(tDebt)} so'm
+
+${customer.balance < 0 ? `❗ <b>Joriy Qarzingiz: ${fmt(Math.abs(customer.balance))} so'm</b>` : `✨ <b>Joriy Balansingiz: ${fmt(customer.balance)} so'm</b>`}
+
+📝 <b>BATAFSIL TARIX:</b>
+━━━━━━━━━━━━━━━━━━
+${tableStr || "Bu davrda hech qanday ma'lumot topilmadi."}`;
+
+    sendTelegram(tgBotToken, customer.tgId, msg);
+    alert("Hisobot mijoz do'koningiz botiga jo'natildi!");
+  };
 
   return (
     <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(28,25,23,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, backdropFilter: "blur(8px)" }} onClick={onClose}>
@@ -33,10 +69,13 @@ export const StatementModal = ({ show, onClose, customer, sales }: StatementModa
             <div style={{ color: T.textD, fontSize: 13 }}>{customer.phone}</div>
             <div style={{ marginTop: 8, fontSize: 14 }}>Joriy balans: <span style={{ fontWeight: 800, color: customer.balance < 0 ? T.red : T.green }}>{fmt(Math.abs(customer.balance))} so'm {customer.balance < 0 ? "(Qarz)" : "(Haqdor)"}</span></div>
           </div>
-          <div style={{ display: "flex", gap: 6 }}>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
             {[1,3,6,12].map(m => (
               <button key={m} onClick={() => setStatementMonths(m)} style={{ ...S.sBtnS, padding: "6px 12px", background: statementMonths === m ? T.accentLight : "transparent", color: statementMonths === m ? T.accent : T.textM, borderColor: statementMonths === m ? T.accent : T.border }}>{m} oy</button>
             ))}
+            <button onClick={sendStatement} style={{ ...S.sBtnS, display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: T.blue, color: "#fff", borderColor: T.blue }}>
+              <span>✈</span> Telegramga
+            </button>
           </div>
         </div>
         
