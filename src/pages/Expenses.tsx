@@ -10,11 +10,24 @@ export const ExpensesPage = () => {
   const { expenses, setExpenses, logActivity } = useStorage();
   const { currentUser } = useAuth();
   
-  const [showExpModal, setShowExpModal] = useState(false);
-  const [expForm, setExpForm] = useState({ category: "moshina", amount: "", description: "", date: "" });
-  
   const today = getToday();
-  const expToday = expenses.filter(e => e.date === today);
+  const [showExpModal, setShowExpModal] = useState(false);
+  const [expForm, setExpForm] = useState({ category: "moshina", amount: "", description: "", date: today });
+  
+  // Date Filters (default 1 month)
+  const d30 = new Date(); d30.setDate(d30.getDate() - 30);
+  const [fromDate, setFromDate] = useState(d30.toISOString().split("T")[0]);
+  const [toDate, setToDate] = useState(today);
+
+  const filteredExp = expenses.filter(e => e.date >= fromDate && e.date <= toDate);
+  const totalFiltered = filteredExp.reduce((s, e) => s + e.amount, 0);
+
+  // Group by category
+  const catSummary = filteredExp.reduce((acc: any, e) => {
+    if (!acc[e.category]) acc[e.category] = 0;
+    acc[e.category] += e.amount;
+    return acc;
+  }, {});
 
   const handleAddExpense = () => {
     if (!expForm.amount) return;
@@ -28,22 +41,48 @@ export const ExpensesPage = () => {
     }, ...prev]);
     
     logActivity(currentUser?.name || "?", `Xarajat: ${cat?.label} — ${fmt(expForm.amount)}`, expForm.date || today, nowTime());
-    setExpForm({ category: "moshina", amount: "", description: "", date: "" }); 
+    setExpForm({ category: "moshina", amount: "", description: "", date: today }); 
     setShowExpModal(false);
   };
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 14 }}>
         <h2 style={{ margin: 0, fontSize: 28, fontWeight: 800 }}>Xarajatlar</h2>
-        <button style={S.sBtn} onClick={() => setShowExpModal(true)}>+ Xarajat qo'shish</button>
+        
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 6, alignItems: "center", background: T.card, padding: "4px 8px", borderRadius: 12, border: `1px solid ${T.border}` }}>
+            <span style={{ fontSize: 18 }}>📅</span>
+            <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} style={{ ...S.sInput, border: "none", background: "transparent", padding: "4px 2px", width: 110, fontSize: 13 }} />
+            <span style={{ color: T.textD }}>—</span>
+            <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} style={{ ...S.sInput, border: "none", background: "transparent", padding: "4px 2px", width: 110, fontSize: 13 }} />
+          </div>
+          <button style={S.sBtn} onClick={() => { setExpForm({...expForm, date: today}); setShowExpModal(true); }}>+ Xarajat qo'shish</button>
+        </div>
       </div>
 
-      <div style={{ ...S.sCard, display: "flex", gap: 16, marginBottom: 20 }}>
-        <div>
-          <div style={{ fontSize: 12, color: T.textM, fontWeight: 700, textTransform: "uppercase" }}>Jami (Bugun)</div>
-          <div style={{ fontSize: 24, fontWeight: 800, color: T.text }}>{fmt(expToday.reduce((s, e) => s + e.amount, 0))}</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16, marginBottom: 20 }}>
+        <div style={{ ...S.sCard, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <div style={{ fontSize: 12, color: T.textM, fontWeight: 700, textTransform: "uppercase" }}>Tanlangan davrdagi Jami Xarajat</div>
+          <div style={{ fontSize: 28, fontWeight: 800, color: T.red, marginTop: 4 }}>{fmt(totalFiltered)}</div>
         </div>
+
+        {Object.keys(catSummary).length > 0 && (
+          <div style={{ ...S.sCard }}>
+            <div style={{ fontSize: 12, color: T.textM, fontWeight: 700, textTransform: "uppercase", marginBottom: 10 }}>Kategoriyalar bo'yicha</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {Object.keys(catSummary).sort((a,b) => catSummary[b] - catSummary[a]).map(catId => {
+                const c = EXPENSE_CATEGORIES.find(x => x.id === catId);
+                if(!c) return null;
+                return (
+                  <div key={catId} style={{ display: "flex", alignItems: "center", gap: 6, background: `${c.color}15`, padding: "6px 10px", borderRadius: 8, fontSize: 12 }}>
+                    <span>{c.icon}</span><span style={{ fontWeight: 600, color: c.color }}>{c.label}:</span> <span style={{ fontWeight: 800 }}>{fmt(catSummary[catId])}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       <div style={{ ...S.sCard, padding: 0, overflow: "hidden" }}>
@@ -55,7 +94,7 @@ export const ExpensesPage = () => {
             </tr>
           </thead>
           <tbody>
-            {expenses.slice(0, 100).map(e => {
+            {filteredExp.map(e => {
               const cat = EXPENSE_CATEGORIES.find(c => c.id === e.category) || EXPENSE_CATEGORIES[6];
               return (
                 <tr key={e.id} style={{ borderBottom: `1px solid ${T.borderLight}` }}>
@@ -71,6 +110,7 @@ export const ExpensesPage = () => {
                 </tr>
               );
             })}
+            {filteredExp.length === 0 && <tr><td colSpan={5} style={{ padding: 24, textAlign: "center", color: T.textD }}>Ushbu davrda xarajatlar yo'q</td></tr>}
           </tbody>
         </table>
         </div>
