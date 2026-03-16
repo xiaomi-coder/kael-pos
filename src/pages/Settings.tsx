@@ -38,12 +38,15 @@ export const SettingsPage = () => {
   };
 
   const togglePermission = (tabId: string) => {
-    setUserForm((prev: any) => ({
-      ...prev,
-      permissions: prev.permissions.includes(tabId) 
-        ? prev.permissions.filter((p: string) => p !== tabId) 
-        : [...prev.permissions, tabId]
-    }));
+    setUserForm((prev: any) => {
+      const perms = prev.permissions || [];
+      return {
+        ...prev,
+        permissions: perms.includes(tabId) 
+          ? perms.filter((p: string) => p !== tabId) 
+          : [...perms, tabId]
+      };
+    });
   };
 
   const handleSaveUser = () => {
@@ -108,7 +111,7 @@ export const SettingsPage = () => {
                         {u.role === 'admin' ? "Barcha ruxsatlar" : (u.permissions || []).map((p: string) => TABS.find(t=>t.id===p)?.label).join(", ")}
                       </td>
                       <td style={{ padding: "12px", textAlign: "right" }}>
-                        <IBtn color={T.blue} onClick={() => { setEditUser(u); setUserForm(u); setShowUserModal(true); }}>✎</IBtn>
+                        <IBtn color={T.blue} onClick={() => { setEditUser(u); setUserForm({ ...u, permissions: u.permissions || [] }); setShowUserModal(true); }}>✎</IBtn>
                       </td>
                     </tr>
                   ))}
