@@ -154,8 +154,9 @@ export const DealersPage = () => {
       </select>
 
       <div style={{ ...S.sCard, padding: 0, overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-          <thead>
+        <div className="table-responsive-wrapper">
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <thead>
             <tr style={{ background: T.cardAlt }}>
               {["Sana","Diller","Turi","Summa","Mahsulotlar/Izoh","Kim"].map(h => <th key={h} style={{ textAlign: "left", padding: "12px 14px", color: T.textM, fontWeight: 700, fontSize: 11, textTransform: "uppercase" }}>{h}</th>)}
             </tr>
@@ -180,6 +181,7 @@ export const DealersPage = () => {
             })}
           </tbody>
         </table>
+        </div>
       </div>
 
       <Modal show={showDealerModal} onClose={() => { setShowDealerModal(false); setEditDealer(null); }} title={editDealer ? "Tahrirlash" : "Yangi diller"}>

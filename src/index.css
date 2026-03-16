@@ -51,3 +51,56 @@ button:active {
 @media print {
   button { display: none !important; }
 }
+
+/* Mobile Responsiveness Rules */
+@media (max-width: 768px) {
+  /* Hide standard sidebar on mobile */
+  .desktop-sidebar {
+    display: none !important;
+  }
+  
+  /* Show bottom navigation only on mobile */
+  .mobile-bottom-nav {
+    display: flex !important;
+  }
+
+  /* Reduce paddings */
+  .main-content {
+    padding: 16px !important;
+    padding-bottom: 80px !important; /* Space for bottom nav */
+  }
+
+  .main-header {
+    padding: 12px 16px !important;
+  }
+
+  /* Make tables horizontally scrollable without breaking the layout */
+  .table-responsive-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -16px;
+    padding: 0 16px;
+  }
+
+  /* Stack flex items that are side-by-side on desktop */
+  .mobile-stack {
+    flex-direction: column !important;
+  }
+  
+  /* Make carts/cards full width on mobile */
+  .mobile-full {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* Increase touch targets */
+  .sBtn, .sBtnS {
+    padding: 14px !important;
+    font-size: 15px !important;
+  }
+}
+
+/* Hide mobile bottom nav on desktop */
+.mobile-bottom-nav {
+  display: none;
+}

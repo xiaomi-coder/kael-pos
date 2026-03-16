@@ -134,7 +134,7 @@ export const ReportsPage = () => {
         <div style={{ flex: 1, minWidth: 320 }}>
           <div style={S.sCard}>
             <h3 style={{ margin: "0 0 16px", fontSize: 16 }}>Top 10 Xaridorgir tovarlar</h3>
-            <div style={{ overflowX: "auto" }}>
+            <div className="table-responsive-wrapper">
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                 <thead>
                   <tr style={{ borderBottom: `2px solid ${T.border}` }}>
@@ -159,7 +159,7 @@ export const ReportsPage = () => {
         <div style={{ flex: 1, minWidth: 320 }}>
           <div style={S.sCard}>
             <h3 style={{ margin: "0 0 16px", fontSize: 16 }}>Top 5 Eng faol doimiy mijozlar</h3>
-            <div style={{ overflowX: "auto" }}>
+            <div className="table-responsive-wrapper">
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                 <thead>
                   <tr style={{ borderBottom: `2px solid ${T.border}` }}>

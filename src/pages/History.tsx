@@ -53,7 +53,7 @@ export const HistoryPage = () => {
         ))}
       </div>
       <div style={{ ...S.sCard, padding: 0, overflow: "hidden" }}>
-        <div style={{ overflowX: "auto" }}>
+        <div className="table-responsive-wrapper">
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
               <tr style={{ background: T.cardAlt }}>
@@ -67,36 +67,36 @@ export const HistoryPage = () => {
                 const cust = customers.find(c => c.id === s.customerId);
                 return (
                   <tr key={s.id} style={{ borderBottom: `1px solid ${T.borderLight}` }}>
-                    <td style={{ padding: "10px", color: T.textD }}>{s.date}</td>
-                    <td style={{ padding: "10px", color: T.textD }}>{s.time}</td>
-                    <td style={{ padding: "10px", color: T.text, fontWeight: 600 }}>{s.customerName}</td>
-                    <td style={{ padding: "10px", color: T.textD, fontSize: 11 }}>{cust?.phone || ""}</td>
-                    <td style={{ padding: "10px" }}>{s.productName}</td>
-                    <td style={{ padding: "10px" }}>{s.qty}</td>
-                    <td style={{ padding: "10px", color: T.accent, fontWeight: 700 }}>{fmt(s.total)}</td>
-                    <td style={{ padding: "10px", color: T.green }}>{fmt(s.paidAmount)}</td>
-                    <td style={{ padding: "10px", color: s.debtAmount > 0 ? T.red : T.textD }}>{s.debtAmount > 0 ? fmt(s.debtAmount) : "—"}</td>
-                    <td style={{ padding: "10px" }}>
-                      <Badge 
-                        text={s.payType === "naqd" ? "Naqd" : s.payType === "qarz" ? "Nasiya" : "Aralash"} 
-                        color={s.payType === "naqd" ? T.green : s.payType === "qarz" ? T.red : T.orange} 
-                      />
-                    </td>
-                    <td style={{ padding: "10px", color: T.textD, fontSize: 11 }}>{s.user || ""}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                  <td style={{ padding: "10px", color: T.textD }}>{s.date}</td>
+                  <td style={{ padding: "10px", color: T.textD }}>{s.time}</td>
+                  <td style={{ padding: "10px", color: T.text, fontWeight: 600 }}>{s.customerName}</td>
+                  <td style={{ padding: "10px", color: T.textD, fontSize: 11 }}>{cust?.phone || ""}</td>
+                  <td style={{ padding: "10px" }}>{s.productName}</td>
+                  <td style={{ padding: "10px" }}>{s.qty}</td>
+                  <td style={{ padding: "10px", color: T.accent, fontWeight: 700 }}>{fmt(s.total)}</td>
+                  <td style={{ padding: "10px", color: T.green }}>{fmt(s.paidAmount)}</td>
+                  <td style={{ padding: "10px", color: s.debtAmount > 0 ? T.red : T.textD }}>{s.debtAmount > 0 ? fmt(s.debtAmount) : "—"}</td>
+                  <td style={{ padding: "10px" }}>
+                    <Badge 
+                      text={s.payType === "naqd" ? "Naqd" : s.payType === "qarz" ? "Nasiya" : "Aralash"} 
+                      color={s.payType === "naqd" ? T.green : s.payType === "qarz" ? T.red : T.orange} 
+                    />
+                  </td>
+                  <td style={{ padding: "10px", color: T.textD, fontSize: 11 }}>{s.user || ""}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
-      
-      <StatementModal 
-        show={!!showCustStatement} 
-        onClose={() => setShowCustStatement(null)} 
-        customer={showCustStatement} 
-        sales={sales} 
-      />
     </div>
-  );
+    
+    <StatementModal 
+      show={!!showCustStatement} 
+      onClose={() => setShowCustStatement(null)} 
+      customer={showCustStatement} 
+      sales={sales} 
+    />
+  </div>
+);
 };

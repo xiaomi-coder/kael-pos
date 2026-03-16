@@ -53,7 +53,7 @@ export const WarehousePage = () => {
       <input style={{ ...S.sInput, marginBottom: 14, maxWidth: 320 }} placeholder="Qidirish..." value={whSearch} onChange={e => setWhSearch(e.target.value)} />
       
       <div style={{ ...S.sCard, padding: 0, overflow: "hidden" }}>
-        <div style={{ overflowX: "auto" }}>
+        <div className="table-responsive-wrapper">
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
             <thead>
               <tr style={{ background: T.cardAlt }}>

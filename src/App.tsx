@@ -37,7 +37,8 @@ export default function App() {
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "'Inter', sans-serif" }}>
-      <div style={{ width: 260, background: T.navBg, color: T.navText, display: "flex", flexDirection: "column", flexShrink: 0, position: "sticky", top: 0, height: "100vh" }}>
+      {/* Desktop Sidebar (Hidden on Mobile) */}
+      <div className="desktop-sidebar" style={{ width: 260, background: T.navBg, color: T.navText, display: "flex", flexDirection: "column", flexShrink: 0, position: "sticky", top: 0, height: "100vh" }}>
         <div style={{ padding: "24px 20px", display: "flex", alignItems: "center", gap: 12, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
           <div style={{ width: 40, height: 40, borderRadius: 10, background: "linear-gradient(135deg, " + T.accent + ", " + T.blue + ")", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: "#fff", fontWeight: 900 }}>K</div>
           <div><div style={{ fontSize: 18, fontWeight: 800, color: "#fff", letterSpacing: "0.5px" }}>KAEL POS</div><div style={{ fontSize: 11, opacity: 0.6, marginTop: 2 }}>{currentUser.name}</div></div>
@@ -51,16 +52,17 @@ export default function App() {
         </div>
       </div>
       
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
-        <div style={{ padding: "16px 32px", background: T.card, borderBottom: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 10 }}>
-          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800 }}>{TABS.find(t => t.id === activeTab)?.label}</h1>
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: T.textM }}>{getToday()}</span>
-            <button style={{ ...S.sBtnS, borderColor: T.red, color: T.red, padding: "8px 16px" }} onClick={logout}>Chiqish</button>
+      {/* Main App Content Area */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, height: "100vh", overflowY: "auto" }}>
+        <div className="main-header" style={{ padding: "16px 32px", background: T.card, borderBottom: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 10 }}>
+          <h1 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>{TABS.find(t => t.id === activeTab)?.label}</h1>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: T.textM, display: "none" }}>{getToday()}</span> {/* hide today on mobile if tight */}
+            <button style={{ ...S.sBtnS, borderColor: T.red, color: T.red, padding: "8px 12px", fontSize: 12 }} onClick={logout}>Chiqish</button>
           </div>
         </div>
         
-        <div style={{ padding: 32, flex: 1, overflowY: "auto" }}>
+        <div className="main-content" style={{ padding: 32, flex: 1, overflowY: "auto" }}>
           <div style={{ maxWidth: 1200, margin: "0 auto" }}>
             {activeTab === "dashboard" && <Dashboard setTab={setActiveTab} />}
             {activeTab === "sales" && <SalesPage />}
@@ -75,6 +77,18 @@ export default function App() {
           </div>
         </div>
       </div>
+
+      {/* Mobile Bottom Navigation (Hidden on Desktop) */}
+      <div className="mobile-bottom-nav" style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: T.navBg, borderTop: "1px solid rgba(255,255,255,0.1)", zIndex: 50, display: "none", justifyContent: "space-around", padding: "8px 4px", paddingBottom: "calc(8px + env(safe-area-inset-bottom))" }}>
+         {TABS.filter(t => currentUser.role === 'admin' || (currentUser.permissions && currentUser.permissions.includes(t.id))).slice(0, 5).map(t => (
+            <button key={t.id} onClick={() => setActiveTab(t.id)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, background: "transparent", color: activeTab === t.id ? T.accentLight : T.navText, border: "none", padding: "6px 0", cursor: "pointer", transition: "0.2s" }}>
+              <span style={{ fontSize: 20 }}>{t.icon}</span>
+              <span style={{ fontSize: 10, fontWeight: activeTab === t.id ? 700 : 500 }}>{t.label.substring(0, 7) + (t.label.length > 7 ? "..." : "")}</span>
+            </button>
+         ))}
+         {/* If they have more than 5 tabs, provide a generic More tab logic or just scroll. For now, max 5 fits well on nav. */}
+      </div>
+
     </div>
   );
 }

@@ -110,10 +110,10 @@ export const SalesPage = () => {
   return (
     <div>
       <h2 style={{ margin: "0 0 24px", fontSize: 28, fontWeight: 800 }}>Sotuv (Kassa)</h2>
-      <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+      <div className="mobile-stack" style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
         
         {/* Left Side: Products */}
-        <div style={{ flex: 1, minWidth: 340 }}>
+        <div className="mobile-full" style={{ flex: 1, minWidth: 340 }}>
           <div style={{ ...S.sCard, marginBottom: 14, padding: "12px 20px" }}>
             <input 
               style={{ ...S.sInput, background: "transparent", border: "none", padding: "8px 0", fontSize: 16 }} 
@@ -134,7 +134,7 @@ export const SalesPage = () => {
         </div>
         
         {/* Right Side: Cart */}
-        <div style={{ width: 430, flexShrink: 0 }}>
+        <div className="mobile-full" style={{ width: 430, flexShrink: 0 }}>
           <div style={{ ...S.sCard, position: "sticky", top: 80 }}>
             <h3 style={{ margin: "0 0 14px", fontSize: 17, fontWeight: 800 }}>Savat ({cart.length})</h3>
             
