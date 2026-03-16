@@ -12,15 +12,28 @@ interface StatementModalProps {
 }
 
 export const StatementModal = ({ show, onClose, customer, sales }: StatementModalProps) => {
+  const [statementMode, setStatementMode] = useState<'months' | 'custom'>('months');
   const [statementMonths, setStatementMonths] = useState(3);
+  const [fromDateStr, setFromDateStr] = useState(getToday());
+  const [toDateStr, setToDateStr] = useState(getToday());
+
   const { tgBotToken } = useStorage();
   
   if (!show || !customer) return null;
 
   const today = getToday();
-  const d = new Date(); d.setMonth(d.getMonth() - statementMonths);
-  const fromDate = d.toISOString().split("T")[0];
-  const statementSales = sales.filter(s => s.customerId === customer.id && s.date >= fromDate && s.date <= today).sort((a,b) => (a.date+a.time > b.date+b.time ? 1 : -1));
+  let fromDate = today;
+  let toDate = today;
+
+  if (statementMode === 'months') {
+    const d = new Date(); d.setMonth(d.getMonth() - statementMonths);
+    fromDate = d.toISOString().split("T")[0];
+  } else {
+    fromDate = fromDateStr;
+    toDate = toDateStr;
+  }
+
+  const statementSales = sales.filter(s => s.customerId === customer.id && s.date >= fromDate && s.date <= toDate).sort((a,b) => (a.date+a.time > b.date+b.time ? 1 : -1));
   const tTotal = sumF(statementSales, "total"), tPaid = sumF(statementSales, "paidAmount"), tDebt = sumF(statementSales, "debtAmount");
 
   const sendStatement = () => {
@@ -38,7 +51,7 @@ export const StatementModal = ({ show, onClose, customer, sales }: StatementModa
 
     const msg = `🧾 <b>MIJOZ HISOB-KITOBI (SVERKA)</b>
 👤 Mijoz: <b>${customer.name}</b>
-📅 Davr: Oxirgi ${statementMonths} oy
+📅 Davr: ${statementMode === 'months' ? `Oxirgi ${statementMonths} oy` : `${fromDate} dan ${toDate} gacha`}
 
 💰 <b>MOLIYAVIY XULOSA:</b>
 ━━━━━━━━━━━━━━━━━━
@@ -63,18 +76,35 @@ ${tableStr || "Bu davrda hech qanday ma'lumot topilmadi."}`;
           <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800 }}>Mijoz hisob-kitobi (Sverka)</h3>
           <button onClick={onClose} style={{ background: T.cardAlt, border: "none", color: T.textM, fontSize: 18, cursor: "pointer", width: 36, height: 36, borderRadius: 10 }}>✕</button>
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20, flexWrap: "wrap", gap: 14 }}>
           <div>
             <div style={{ fontSize: 18, fontWeight: 800 }}>{customer.name}</div>
             <div style={{ color: T.textD, fontSize: 13 }}>{customer.phone}</div>
             <div style={{ marginTop: 8, fontSize: 14 }}>Joriy balans: <span style={{ fontWeight: 800, color: customer.balance < 0 ? T.red : T.green }}>{fmt(Math.abs(customer.balance))} so'm {customer.balance < 0 ? "(Qarz)" : "(Haqdor)"}</span></div>
           </div>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-            {[1,3,6,12].map(m => (
-              <button key={m} onClick={() => setStatementMonths(m)} style={{ ...S.sBtnS, padding: "6px 12px", background: statementMonths === m ? T.accentLight : "transparent", color: statementMonths === m ? T.accent : T.textM, borderColor: statementMonths === m ? T.accent : T.border }}>{m} oy</button>
-            ))}
-            <button onClick={sendStatement} style={{ ...S.sBtnS, display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: T.blue, color: "#fff", borderColor: T.blue }}>
-              <span>✈</span> Telegramga
+          
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "flex-end" }}>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", background: T.cardAlt, padding: 6, borderRadius: 12 }}>
+              <button onClick={() => setStatementMode('months')} style={{ ...S.sBtnS, padding: "6px 12px", background: statementMode === 'months' ? T.card : "transparent", color: statementMode === 'months' ? T.text : T.textM, border: "none", boxShadow: statementMode === 'months' ? T.shadow : "none" }}>Oylar</button>
+              <button onClick={() => setStatementMode('custom')} style={{ ...S.sBtnS, padding: "6px 12px", background: statementMode === 'custom' ? T.card : "transparent", color: statementMode === 'custom' ? T.text : T.textM, border: "none", boxShadow: statementMode === 'custom' ? T.shadow : "none" }}>Davr</button>
+            </div>
+
+            {statementMode === 'months' ? (
+              <div style={{ display: "flex", gap: 6 }}>
+                {[1,3,6,12].map(m => (
+                  <button key={m} onClick={() => setStatementMonths(m)} style={{ ...S.sBtnS, padding: "6px 12px", background: statementMonths === m ? T.accentLight : "transparent", color: statementMonths === m ? T.accent : T.textM, borderColor: statementMonths === m ? T.accent : T.border }}>{m} oy</button>
+                ))}
+              </div>
+            ) : (
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <input type="date" value={fromDateStr} onChange={e => setFromDateStr(e.target.value)} style={{ ...S.sInput, padding: "6px 10px", height: 34, fontSize: 13 }} />
+                <span style={{ color: T.textD }}>-</span>
+                <input type="date" value={toDateStr} onChange={e => setToDateStr(e.target.value)} style={{ ...S.sInput, padding: "6px 10px", height: 34, fontSize: 13 }} />
+              </div>
+            )}
+
+            <button onClick={sendStatement} style={{ ...S.sBtnS, display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: T.blue, color: "#fff", borderColor: T.blue, marginTop: 4 }}>
+              <span style={{ fontSize: 16 }}>✈</span> Telegramga
             </button>
           </div>
         </div>
