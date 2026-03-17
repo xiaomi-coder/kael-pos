@@ -3,14 +3,23 @@ import { useAuth } from './hooks/useAuth';
 import { T, TABS } from './constants';
 import * as S from './styles';
 import { getToday } from './utils';
+import { useEffect } from 'react';
+import { useStorage } from './hooks/useStorage';
 import { 
   Dashboard, SalesPage, HistoryPage, WarehousePage, CustomersPage,
   DebtsPage, ExpensesPage, DealersPage, ReportsPage, SettingsPage
 } from './pages';
 
 export default function App() {
-  const { currentUser, loginUser, loginPass, setLoginUser, setLoginPass, loginError, handleLogin, logout } = useAuth();
+  const { currentUser, loginUser, loginPass, setLoginUser, setLoginPass, loginError, handleLogin, logout, isLoggingIn } = useAuth();
   const [activeTab, setActiveTab] = useState("dashboard");
+  const { fetchData, isLoading } = useStorage();
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchData();
+    }
+  }, [currentUser, fetchData]);
 
   if (!currentUser) {
     return (
@@ -27,10 +36,20 @@ export default function App() {
           </div>
           <div style={{ marginBottom: 20 }}>
             <label style={{ display: "block", fontSize: 12, color: T.textM, marginBottom: 6, fontWeight: 600 }}>Parol</label>
-            <input type="password" style={S.sInput} value={loginPass} onChange={e => setLoginPass(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+            <input type="password" style={S.sInput} value={loginPass} onChange={e => setLoginPass(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleLogin()} disabled={isLoggingIn} />
           </div>
-          <button style={{ ...S.sBtn, width: "100%", padding: 14 }} onClick={handleLogin}>Kirish</button>
+          <button style={{ ...S.sBtn, width: "100%", padding: 14, opacity: isLoggingIn ? 0.7 : 1 }} onClick={handleLogin} disabled={isLoggingIn}>
+            {isLoggingIn ? "Tizimga ulanmoqda..." : "Kirish"}
+          </button>
         </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div style={{ minHeight: "100vh", background: T.bg, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ color: T.textM, fontSize: 16, fontWeight: 600 }}>Ma'lumotlar yuklanmoqda...</div>
       </div>
     );
   }
