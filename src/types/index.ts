@@ -15,6 +15,7 @@ export interface Product {
   cost: number;
   stock: number;
   minStock: number;
+  packSize?: number;
 }
 
 export interface Customer {

@@ -11,26 +11,26 @@ export const WarehousePage = () => {
   const [whSearch, setWhSearch] = useState("");
   const [showProdModal, setShowProdModal] = useState(false);
   const [editProd, setEditProd] = useState<any>(null);
-  const [prodForm, setProdForm] = useState({ name: "", unit: "dona", price: "", cost: "", stock: "", minStock: "" });
+  const [prodForm, setProdForm] = useState({ name: "", unit: "dona", price: "", cost: "", stock: "", minStock: "", packSize: "" });
 
   const filtered = whSearch ? products.filter(p => p.name.toLowerCase().includes(whSearch.toLowerCase())) : products;
 
   const handleAddProduct = () => {
     if (!prodForm.name || !prodForm.price) return;
     if (editProd) {
-      setProducts(prev => prev.map(p => p.id === editProd.id ? { ...p, name: prodForm.name, unit: prodForm.unit, price: Number(prodForm.price), cost: Number(prodForm.cost), stock: Number(prodForm.stock) || 0, minStock: Number(prodForm.minStock) || 10 } : p));
+      setProducts(prev => prev.map(p => p.id === editProd.id ? { ...p, name: prodForm.name, unit: prodForm.unit, price: Number(prodForm.price), cost: Number(prodForm.cost), stock: Number(prodForm.stock) || 0, minStock: Number(prodForm.minStock) || 10, packSize: Number(prodForm.packSize) || undefined } : p));
       logActivity("Tizim", `Mahsulot tahrirlandi: ${prodForm.name}`, "", ""); 
       setEditProd(null);
     } else {
-      setProducts(prev => [...prev, { id: Math.max(0, ...prev.map(x => x.id)) + 1, name: prodForm.name, unit: prodForm.unit, price: Number(prodForm.price), cost: Number(prodForm.cost), stock: Number(prodForm.stock) || 0, minStock: Number(prodForm.minStock) || 10 }]);
+      setProducts(prev => [...prev, { id: Math.max(0, ...prev.map(x => x.id)) + 1, name: prodForm.name, unit: prodForm.unit, price: Number(prodForm.price), cost: Number(prodForm.cost), stock: Number(prodForm.stock) || 0, minStock: Number(prodForm.minStock) || 10, packSize: Number(prodForm.packSize) || undefined }]);
       logActivity("Tizim", `Yangi mahsulot: ${prodForm.name}`, "", "");
     }
-    setProdForm({ name: "", unit: "dona", price: "", cost: "", stock: "", minStock: "" }); 
+    setProdForm({ name: "", unit: "dona", price: "", cost: "", stock: "", minStock: "", packSize: "" }); 
     setShowProdModal(false);
   };
 
   const startEditProduct = (p: any) => { 
-    setProdForm({ name: p.name, unit: p.unit, price: String(p.price), cost: String(p.cost), stock: String(p.stock), minStock: String(p.minStock) }); 
+    setProdForm({ name: p.name, unit: p.unit, price: String(p.price), cost: String(p.cost), stock: String(p.stock), minStock: String(p.minStock), packSize: p.packSize ? String(p.packSize) : "" }); 
     setEditProd(p); 
     setShowProdModal(true); 
   };
@@ -46,7 +46,7 @@ export const WarehousePage = () => {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
         <h2 style={{ margin: 0, fontSize: 28, fontWeight: 800 }}>Ombor</h2>
-        <button style={S.sBtn} onClick={() => { setEditProd(null); setProdForm({ name: "", unit: "dona", price: "", cost: "", stock: "", minStock: "" }); setShowProdModal(true); }}>
+        <button style={S.sBtn} onClick={() => { setEditProd(null); setProdForm({ name: "", unit: "dona", price: "", cost: "", stock: "", minStock: "", packSize: "" }); setShowProdModal(true); }}>
           + Yangi mahsulot
         </button>
       </div>
@@ -100,6 +100,7 @@ export const WarehousePage = () => {
         <FL label="Sotuv narx"><input type="number" style={S.sInput} value={prodForm.price} onChange={e => setProdForm(p => ({ ...p, price: e.target.value }))} /></FL>
         <FL label="Qoldiq"><input type="number" style={S.sInput} value={prodForm.stock} onChange={e => setProdForm(p => ({ ...p, stock: e.target.value }))} /></FL>
         <FL label="Min qoldiq"><input type="number" style={S.sInput} value={prodForm.minStock} onChange={e => setProdForm(p => ({ ...p, minStock: e.target.value }))} /></FL>
+        <FL label="Qadoq hajmi (Masalan: 50)"><input type="number" style={S.sInput} value={prodForm.packSize} onChange={e => setProdForm(p => ({ ...p, packSize: e.target.value }))} placeholder="Bo'sh bo'lsa hisoblanmaydi" /></FL>
         <button style={{ ...S.sBtn, width: "100%", padding: 14, borderRadius: 14 }} onClick={handleAddProduct}>{editProd ? "Saqlash" : "Qo'shish"}</button>
       </Modal>
     </div>

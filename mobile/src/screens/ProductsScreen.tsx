@@ -14,7 +14,7 @@ export function ProductsScreen() {
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editProd, setEditProd] = useState<any>(null);
-  const [form, setForm] = useState({ name: '', unit: 'dona', price: '', cost: '', stock: '', minStock: '' });
+  const [form, setForm] = useState({ name: '', unit: 'dona', price: '', cost: '', stock: '', minStock: '', packSize: '' });
 
   const filtered = search ? products.filter((p: any) => p.name.toLowerCase().includes(search.toLowerCase())) : products;
 
@@ -25,7 +25,8 @@ export function ProductsScreen() {
       setProducts((prev: any[]) => prev.map((p: any) => p.id === editProd.id ? { 
         ...p, name: form.name, unit: form.unit, 
         price: Number(form.price), cost: Number(form.cost), 
-        stock: Number(form.stock) || 0, minStock: Number(form.minStock) || 10 
+        stock: Number(form.stock) || 0, minStock: Number(form.minStock) || 10,
+        packSize: Number(form.packSize) || undefined
       } : p));
       logActivity("Tizim", `Mahsulot tahrirlandi: ${form.name}`, "", "");
     } else {
@@ -33,7 +34,8 @@ export function ProductsScreen() {
       setProducts((prev: any[]) => [...prev, { 
         id: newId, name: form.name, unit: form.unit, 
         price: Number(form.price), cost: Number(form.cost), 
-        stock: Number(form.stock) || 0, minStock: Number(form.minStock) || 10 
+        stock: Number(form.stock) || 0, minStock: Number(form.minStock) || 10,
+        packSize: Number(form.packSize) || undefined
       }]);
       logActivity("Tizim", `Yangi mahsulot: ${form.name}`, "", "");
     }
@@ -41,7 +43,7 @@ export function ProductsScreen() {
   };
 
   const openAppEdit = (p: any) => {
-    setForm({ name: p.name, unit: p.unit, price: String(p.price), cost: String(p.cost), stock: String(p.stock), minStock: String(p.minStock) });
+    setForm({ name: p.name, unit: p.unit, price: String(p.price), cost: String(p.cost), stock: String(p.stock), minStock: String(p.minStock), packSize: p.packSize ? String(p.packSize) : "" });
     setEditProd(p);
     setShowModal(true);
   };
@@ -49,7 +51,7 @@ export function ProductsScreen() {
   const closeModal = () => {
     setShowModal(false);
     setEditProd(null);
-    setForm({ name: '', unit: 'dona', price: '', cost: '', stock: '', minStock: '' });
+    setForm({ name: '', unit: 'dona', price: '', cost: '', stock: '', minStock: '', packSize: '' });
   };
 
   const handleDelete = (id: number) => {
@@ -134,7 +136,7 @@ export function ProductsScreen() {
               <Input label="Tannarx" keyboardType="numeric" value={form.cost} onChangeText={(t: string) => setForm((p: any) => ({...p, cost: t}))} />
               <Input label="Sotuv narx" keyboardType="numeric" value={form.price} onChangeText={(t: string) => setForm((p: any) => ({...p, price: t}))} />
               
-              <View style={{flexDirection: 'row', gap: 10}}>
+              <View style={{flexDirection: 'row', gap: 10, marginBottom: 4}}>
                 <View style={{flex: 1}}>
                   <Input label="Qoldiq" keyboardType="numeric" value={form.stock} onChangeText={(t: string) => setForm((p: any) => ({...p, stock: t}))} />
                 </View>
@@ -142,6 +144,7 @@ export function ProductsScreen() {
                   <Input label="Min qoldiq" keyboardType="numeric" value={form.minStock} onChangeText={(t: string) => setForm((p: any) => ({...p, minStock: t}))} />
                 </View>
               </View>
+              <Input label="Qadoq hajmi (ixtiyoriy, masalan: 50)" keyboardType="numeric" value={form.packSize} onChangeText={(t: string) => setForm((p: any) => ({...p, packSize: t}))} />
 
               <Button title={editProd ? "Saqlash" : "Qo'shish"} onPress={handleSave} style={{marginTop: 10}} />
             </View>

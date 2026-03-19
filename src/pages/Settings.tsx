@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStorage } from '../hooks/useStorage';
 import { useAuth } from '../hooks/useAuth';
 import * as S from '../styles';
@@ -15,6 +15,12 @@ export const SettingsPage = () => {
   const [showUserModal, setShowUserModal] = useState(false);
   const [editUser, setEditUser] = useState<any>(null);
   const [userForm, setUserForm] = useState<any>({ login: "", pass: "", name: "", role: "sotuvchi", permissions: [] });
+
+  useEffect(() => {
+    setBotTokenInput(tgBotToken);
+    setChatIdInput(tgChatId);
+  }, [tgBotToken, tgChatId]);
+
 
   const saveTg = () => {
     setTgBotToken(botTokenInput);

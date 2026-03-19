@@ -23,7 +23,7 @@ export const SalesPage = () => {
   const addToCart = (prod: any) => {
     const exists = cart.find(c => c.productId === prod.id);
     if (exists) setCart(cart.map(c => c.productId === prod.id ? { ...c, qty: c.qty + 1, total: (c.qty + 1) * c.unitPrice } : c));
-    else setCart([...cart, { productId: prod.id, productName: prod.name, qty: 1, price: prod.price, unitPrice: prod.price, cost: prod.cost, discount: 0, total: prod.price, unit: prod.unit }]);
+    else setCart([...cart, { productId: prod.id, productName: prod.name, qty: 1, price: prod.price, unitPrice: prod.price, cost: prod.cost, discount: 0, total: prod.price, unit: prod.unit, packSize: prod.packSize }]);
   };
   const updateCartQty = (pid: number, qty: number) => { if (qty < 1) return removeFromCart(pid); setCart(cart.map(c => c.productId === pid ? { ...c, qty, total: qty * c.unitPrice } : c)); };
   const updateCartDiscount = (pid: number, disc: string) => {
@@ -191,12 +191,18 @@ ${customerObj.balance - debtAmt < 0 ? `❗ <b>Sizning umumiy qarzingiz: ${fmt(Ma
                     </div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, fontSize: 11 }}>
                       <div>
-                        <div style={{ color: T.textD, fontSize: 10, fontWeight: 600, marginBottom: 3 }}>SONI</div>
+                        <div style={{ color: T.textD, fontSize: 10, fontWeight: 600, marginBottom: 3 }}>SONI {item.packSize > 1 ? `(yoki QADOQ)` : ''}</div>
                         <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
                           <button onClick={() => updateCartQty(item.productId, item.qty - 1)} style={{ width: 26, height: 26, borderRadius: 7, background: T.card, border: `1px solid ${T.border}`, cursor: "pointer", fontSize: 14 }}>−</button>
                           <input type="number" value={item.qty} onChange={e => updateCartQty(item.productId, Number(e.target.value))} style={{ ...S.sInput, width: 40, textAlign: "center", padding: "4px 2px", fontSize: 13, fontWeight: 700 }} />
                           <button onClick={() => updateCartQty(item.productId, item.qty + 1)} style={{ width: 26, height: 26, borderRadius: 7, background: T.card, border: `1px solid ${T.border}`, cursor: "pointer", fontSize: 14 }}>+</button>
                         </div>
+                        {item.packSize > 1 && (
+                          <div style={{ display: "flex", gap: 4, alignItems: "center", marginTop: 6, padding: "2px", background: T.accentLight, borderRadius: 6, border: `1px solid ${T.accent}` }}>
+                            <span style={{ fontSize: 9, color: T.accent, fontWeight: 800, marginLeft: 2 }}>QOP:</span>
+                            <input type="number" value={Math.floor(item.qty / item.packSize)} onChange={e => updateCartQty(item.productId, Number(e.target.value) * item.packSize + (item.qty % item.packSize))} style={{ ...S.sInput, width: 36, textAlign: "center", padding: "2px", fontSize: 12, fontWeight: 700, border: "none", background: "transparent", color: T.accent }} />
+                          </div>
+                        )}
                       </div>
                       <div>
                         <div style={{ color: T.textD, fontSize: 10, fontWeight: 600, marginBottom: 3 }}>NARX</div>
