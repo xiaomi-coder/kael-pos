@@ -11,7 +11,7 @@ export const CustomersPage = () => {
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editCust, setEditCust] = useState<any>(null);
-  const [form, setForm] = useState({ name: "", phone: "", address: "", tgId: "" });
+  const [form, setForm] = useState({ name: "", phone: "", address: "", tgId: "", balance: "" });
   const [showCustStatement, setShowCustStatement] = useState<any>(null);
 
   const filtered = search ? customers.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.phone.includes(search)) : customers;
@@ -31,19 +31,20 @@ export const CustomersPage = () => {
 
   const handleSave = () => {
     if (!form.name || !form.phone) return;
+    const debt = Number(form.balance) || 0;
     if (editCust) {
-      setCustomers(prev => prev.map(c => c.id === editCust.id ? { ...c, ...form } : c));
+      setCustomers(prev => prev.map(c => c.id === editCust.id ? { ...c, name: form.name, phone: form.phone, address: form.address, tgId: form.tgId, balance: -debt } : c));
       logActivity("Tizim", `Mijoz tahrirlandi: ${form.name}`, "", "");
       setEditCust(null);
     } else {
-      setCustomers(prev => [...prev, { id: Math.max(0, ...prev.map(x => x.id)) + 1, ...form, balance: 0 }]);
+      setCustomers(prev => [...prev, { id: Math.max(0, ...prev.map(x => x.id)) + 1, name: form.name, phone: form.phone, address: form.address, tgId: form.tgId, balance: -debt }]);
       logActivity("Tizim", `Yangi mijoz: ${form.name}`, "", "");
     }
-    setForm({ name: "", phone: "", address: "", tgId: "" }); 
+    setForm({ name: "", phone: "", address: "", tgId: "", balance: "" }); 
     setShowModal(false);
   };
 
-  const startEdit = (c: any) => { setForm({ name: c.name, phone: c.phone, address: c.address, tgId: c.tgId || "" }); setEditCust(c); setShowModal(true); };
+  const startEdit = (c: any) => { setForm({ name: c.name, phone: c.phone, address: c.address, tgId: c.tgId || "", balance: c.balance < 0 ? String(Math.abs(c.balance)) : "" }); setEditCust(c); setShowModal(true); };
   const handleDelete = (id: number) => { 
     if (confirm("Rostdan o'chirasizmi?")) { 
       setCustomers(prev => prev.filter(c => c.id !== id)); 
@@ -55,7 +56,7 @@ export const CustomersPage = () => {
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
         <h2 style={{ margin: 0, fontSize: 28, fontWeight: 800 }}>Mijozlar</h2>
-        <button style={S.sBtn} onClick={() => { setEditCust(null); setForm({ name: "", phone: "", address: "", tgId: "" }); setShowModal(true); }}>+ Yangi mijoz</button>
+        <button style={S.sBtn} onClick={() => { setEditCust(null); setForm({ name: "", phone: "", address: "", tgId: "", balance: "" }); setShowModal(true); }}>+ Yangi mijoz</button>
       </div>
 
       {/* Top 10 Customers Section */}
@@ -111,6 +112,7 @@ export const CustomersPage = () => {
         <FL label="F.I.SH"><input style={S.sInput} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} autoFocus /></FL>
         <FL label="Telefon"><input style={S.sInput} placeholder="+998..." value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} /></FL>
         <FL label="Manzil"><input style={S.sInput} value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} /></FL>
+        <FL label="Joriy qarzi (so'm)"><input type="number" style={S.sInput} placeholder="Oldindan qarzi bo'lsa kiriting" value={form.balance} onChange={e => setForm({ ...form, balance: e.target.value })} /></FL>
         <FL label="Telegram Chat ID"><input style={S.sInput} placeholder="Misol: 123456789" value={form.tgId} onChange={e => setForm({ ...form, tgId: e.target.value })} /></FL>
         <button style={{ ...S.sBtn, width: "100%", padding: 14, marginTop: 10, borderRadius: 14 }} onClick={handleSave}>{editCust ? "Saqlash" : "Qo'shish"}</button>
       </Modal>
