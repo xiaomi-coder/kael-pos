@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, Alert, ScrollView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, Alert, ScrollView, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useStorage } from '../hooks/useStorage';
 import { useAuth } from '../hooks/useAuth';
@@ -121,20 +121,19 @@ export function SalesScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        
-        {/* Left Side (or Top on Mobile): Product Picker */}
-        <View style={styles.searchSection}>
-          <Text style={styles.title}>Kassa (Sotuv)</Text>
-          <Input 
-            placeholder="Kassadan mahsulot qidirish..." 
-            value={prodSearch} 
-            onChangeText={setProdSearch} 
-          />
-        </View>
-
-        <View style={{ flex: 1, flexDirection: 'row' }}>
+      <KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View style={styles.container}>
           
+          {/* Product search + grid */}
+          <View style={styles.searchSection}>
+            <Text style={styles.title}>Kassa (Sotuv)</Text>
+            <Input 
+              placeholder="Kassadan mahsulot qidirish..." 
+              value={prodSearch} 
+              onChangeText={setProdSearch} 
+            />
+          </View>
+
           <View style={styles.productsList}>
             <FlatList
               data={filteredProds}
@@ -142,132 +141,130 @@ export function SalesScreen() {
               renderItem={renderProduct}
               numColumns={2}
               columnWrapperStyle={{ gap: 10 }}
-              contentContainerStyle={{ gap: 10, paddingBottom: 20 }}
+              contentContainerStyle={{ gap: 10, paddingBottom: 10 }}
+              scrollEnabled={true}
+              style={{ maxHeight: 220 }}
             />
           </View>
 
-        </View>
-        
-        {/* Bottom Sheet / Cart Area */}
-        <Card style={styles.cartSection}>
-          <Text style={styles.cartTitle}>Savat ({cart.length})</Text>
-          
-          {cart.length === 0 ? (
-            <Text style={styles.emptyCart}>Mahsulot tanlang</Text>
-          ) : (
-            <ScrollView style={styles.cartList}>
-              {cart.map(item => (
-                <View key={item.productId} style={styles.cartItem}>
-                  <View style={styles.cartItemHeader}>
-                    <Text style={styles.cartItemName}>{item.productName}</Text>
-                    <TouchableOpacity onPress={() => removeFromCart(item.productId)}>
-                      <Text style={{color: T.red, fontWeight: '700'}}>✕</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={styles.cartItemControls}>
-                    <TouchableOpacity onPress={() => updateCartQty(item.productId, item.qty - 1)} style={styles.qtyBtn}><Text>-</Text></TouchableOpacity>
-                    <Text style={styles.qtyText}>{item.qty}</Text>
-                    <TouchableOpacity onPress={() => updateCartQty(item.productId, item.qty + 1)} style={styles.qtyBtn}><Text>+</Text></TouchableOpacity>
-                    <View style={{flex: 1}}/>
-                    <Text style={styles.cartItemTotal}>{fmt(item.total)}</Text>
-                  </View>
-                  {item.packSize > 1 && (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, padding: 6, backgroundColor: T.accentLight, borderRadius: 8, borderWidth: 1, borderColor: T.accent }}>
-                      <Text style={{ fontSize: 11, color: T.accent, fontWeight: '800', marginRight: 6 }}>QOP:</Text>
-                      <TextInput 
-                        style={{ padding: 0, fontSize: 13, fontWeight: '700', color: T.accent, minWidth: 40 }}
-                        keyboardType="numeric"
-                        value={String(Math.floor(item.qty / item.packSize))}
-                        onChangeText={(t) => updateCartQty(item.productId, (Number(t) || 0) * item.packSize + (item.qty % item.packSize))}
-                      />
-                    </View>
-                  )}
-                </View>
-              ))}
-            </ScrollView>
-          )}
-
-          <View style={styles.checkoutBox}>
+          {/* Cart + Checkout — scrollable together */}
+          <ScrollView style={styles.cartSection} showsVerticalScrollIndicator={false}>
+            <Text style={styles.cartTitle}>Savat ({cart.length})</Text>
             
-            <View style={{flexDirection: 'row', gap: 10, marginBottom: 12}}>
-               <TouchableOpacity style={[styles.typeBtn, isOneTime && styles.typeActive]} onPress={() => setIsOneTime(true)}>
-                 <Text style={isOneTime ? styles.typeActiveTxt : styles.typeTxt}>Bir martalik</Text>
-               </TouchableOpacity>
-               <TouchableOpacity style={[styles.typeBtn, !isOneTime && styles.typeActive]} onPress={() => setIsOneTime(false)}>
-                 <Text style={!isOneTime ? styles.typeActiveTxt : styles.typeTxt}>Doimiy mijoz</Text>
-               </TouchableOpacity>
-            </View>
-
-            {isOneTime ? (
-              <Input placeholder="Mijoz ismi (Ixtiyoriy)" value={oneTimeName} onChangeText={setOneTimeName} />
+            {cart.length === 0 ? (
+              <Text style={styles.emptyCart}>Mahsulot tanlang</Text>
             ) : (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{marginBottom: 12, maxHeight: 45}}>
-                {customers.map((c: any) => (
-                  <TouchableOpacity 
-                    key={c.id} 
-                    style={[styles.chip, saleCustomerId === String(c.id) && styles.chipActive]}
-                    onPress={() => setSaleCustomerId(String(c.id))}
-                  >
-                    <Text style={[styles.chipTxt, saleCustomerId === String(c.id) && styles.chipActiveTxt]}>{c.name}</Text>
-                  </TouchableOpacity>
+              <View>
+                {cart.map(item => (
+                  <View key={item.productId} style={styles.cartItem}>
+                    <View style={styles.cartItemHeader}>
+                      <Text style={styles.cartItemName}>{item.productName}</Text>
+                      <TouchableOpacity onPress={() => removeFromCart(item.productId)}>
+                        <Text style={{color: T.red, fontWeight: '700', fontSize: 16}}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <View style={styles.cartItemControls}>
+                      <TouchableOpacity onPress={() => updateCartQty(item.productId, item.qty - 1)} style={styles.qtyBtn}><Text style={{fontWeight:'700'}}>-</Text></TouchableOpacity>
+                      <Text style={styles.qtyText}>{item.qty}</Text>
+                      <TouchableOpacity onPress={() => updateCartQty(item.productId, item.qty + 1)} style={styles.qtyBtn}><Text style={{fontWeight:'700'}}>+</Text></TouchableOpacity>
+                      <View style={{flex: 1}}/>
+                      <Text style={styles.cartItemTotal}>{fmt(item.total)}</Text>
+                    </View>
+                    {item.packSize > 1 && (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, padding: 6, backgroundColor: T.accentLight, borderRadius: 8, borderWidth: 1, borderColor: T.accent }}>
+                        <Text style={{ fontSize: 11, color: T.accent, fontWeight: '800', marginRight: 6 }}>QOP:</Text>
+                        <TextInput 
+                          style={{ padding: 0, fontSize: 13, fontWeight: '700', color: T.accent, minWidth: 40 }}
+                          keyboardType="numeric"
+                          value={String(Math.floor(item.qty / item.packSize))}
+                          onChangeText={(t) => updateCartQty(item.productId, (Number(t) || 0) * item.packSize + (item.qty % item.packSize))}
+                        />
+                      </View>
+                    )}
+                  </View>
                 ))}
-              </ScrollView>
-            )}
-
-            <View style={{flexDirection: 'row', gap: 10, marginBottom: 16}}>
-               <TouchableOpacity style={[styles.payTypeBtn, paymentType === 'naqd' && styles.payActive]} onPress={() => setPaymentType('naqd')}>
-                 <Text style={paymentType === 'naqd' ? styles.payActiveTxt : styles.payTxt}>Naqd</Text>
-               </TouchableOpacity>
-               {!isOneTime && (
-                 <TouchableOpacity style={[styles.payTypeBtn, paymentType === 'qarz' && styles.payActive]} onPress={() => setPaymentType('qarz')}>
-                   <Text style={paymentType === 'qarz' ? styles.payActiveTxt : styles.payTxt}>Qarz</Text>
-                 </TouchableOpacity>
-               )}
-               <TouchableOpacity style={[styles.payTypeBtn, paymentType === 'aralash' && styles.payActive]} onPress={() => setPaymentType('aralash')}>
-                 <Text style={paymentType === 'aralash' ? styles.payActiveTxt : styles.payTxt}>Aralash</Text>
-               </TouchableOpacity>
-            </View>
-
-            {paymentType === 'aralash' && (
-              <Input placeholder="Naqd to'lanadigan qismi..." keyboardType="numeric" value={cashAmount} onChangeText={setCashAmount} />
-            )}
-
-            <Text style={styles.totalText}>JAMI: {fmt(cartTotal)} so'm</Text>
-            <Button title="Sotish" onPress={handleCheckout} disabled={cart.length === 0} />
-          </View>
-        </Card>
-
-        {/* Receipt Modal */}
-        <Modal visible={!!showReceipt} animationType="fade" transparent>
-          <View style={styles.modalOverlay}>
-            <View style={styles.receiptBox}>
-              <Text style={styles.receiptTitle}>KAEL POS</Text>
-              <Text style={{textAlign: 'center', color: T.textD, marginBottom: 10}}>Chek #{showReceipt?.receiptNo}</Text>
-              <View style={styles.dashedLine} />
-              
-              <Text style={{fontSize: 13}}>Mijoz: {showReceipt?.customer}</Text>
-              <Text style={{fontSize: 12, color: T.textD}}>{showReceipt?.date} {showReceipt?.time}</Text>
-              <View style={styles.dashedLine} />
-              
-              {showReceipt?.items.map((it: any, i: number) => (
-                <View key={i} style={{flexDirection: 'row', justifyContent: 'space-between', marginVertical: 4}}>
-                  <Text style={{fontSize: 12}}>{it.productName} x{it.qty}</Text>
-                  <Text style={{fontSize: 12, fontWeight: '700'}}>{fmt(it.total)}</Text>
-                </View>
-              ))}
-              
-              <View style={styles.dashedLine} />
-              <View style={{flexDirection: 'row', justifyContent: 'space-between', marginVertical: 8}}>
-                <Text style={{fontSize: 16, fontWeight: '800'}}>JAMI:</Text>
-                <Text style={{fontSize: 16, fontWeight: '800', color: T.accent}}>{fmt(showReceipt?.total)}</Text>
               </View>
-              
-              <Button title="Yopish" onPress={() => setShowReceipt(null)} style={{marginTop: 20}} />
-            </View>
-          </View>
-        </Modal>
+            )}
 
-      </View>
+            {/* Checkout section */}
+            <View style={styles.checkoutBox}>
+              <View style={{flexDirection: 'row', gap: 10, marginBottom: 12}}>
+                <TouchableOpacity style={[styles.typeBtn, isOneTime && styles.typeActive]} onPress={() => setIsOneTime(true)}>
+                  <Text style={isOneTime ? styles.typeActiveTxt : styles.typeTxt}>Bir martalik</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.typeBtn, !isOneTime && styles.typeActive]} onPress={() => setIsOneTime(false)}>
+                  <Text style={!isOneTime ? styles.typeActiveTxt : styles.typeTxt}>Doimiy mijoz</Text>
+                </TouchableOpacity>
+              </View>
+
+              {isOneTime ? (
+                <Input placeholder="Mijoz ismi (Ixtiyoriy)" value={oneTimeName} onChangeText={setOneTimeName} />
+              ) : (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{marginBottom: 12, maxHeight: 45}}>
+                  {customers.map((c: any) => (
+                    <TouchableOpacity 
+                      key={c.id} 
+                      style={[styles.chip, saleCustomerId === String(c.id) && styles.chipActive]}
+                      onPress={() => setSaleCustomerId(String(c.id))}
+                    >
+                      <Text style={[styles.chipTxt, saleCustomerId === String(c.id) && styles.chipActiveTxt]}>{c.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
+
+              <View style={{flexDirection: 'row', gap: 10, marginBottom: 12}}>
+                <TouchableOpacity style={[styles.payTypeBtn, paymentType === 'naqd' && styles.payActive]} onPress={() => setPaymentType('naqd')}>
+                  <Text style={paymentType === 'naqd' ? styles.payActiveTxt : styles.payTxt}>Naqd</Text>
+                </TouchableOpacity>
+                {!isOneTime && (
+                  <TouchableOpacity style={[styles.payTypeBtn, paymentType === 'qarz' && styles.payActive]} onPress={() => setPaymentType('qarz')}>
+                    <Text style={paymentType === 'qarz' ? styles.payActiveTxt : styles.payTxt}>Qarz</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity style={[styles.payTypeBtn, paymentType === 'aralash' && styles.payActive]} onPress={() => setPaymentType('aralash')}>
+                  <Text style={paymentType === 'aralash' ? styles.payActiveTxt : styles.payTxt}>Aralash</Text>
+                </TouchableOpacity>
+              </View>
+
+              {paymentType === 'aralash' && (
+                <Input placeholder="Naqd to'lanadigan qismi..." keyboardType="numeric" value={cashAmount} onChangeText={setCashAmount} />
+              )}
+
+              <Text style={styles.totalText}>JAMI: {fmt(cartTotal)} so'm</Text>
+              <Button title="Sotish" onPress={handleCheckout} disabled={cart.length === 0} />
+            </View>
+          </ScrollView>
+
+          {/* Receipt Modal */}
+          <Modal visible={!!showReceipt} animationType="fade" transparent>
+            <View style={styles.modalOverlay}>
+              <View style={styles.receiptBox}>
+                <Text style={styles.receiptTitle}>KAEL POS</Text>
+                <Text style={{textAlign: 'center', color: T.textD, marginBottom: 10}}>Chek #{showReceipt?.receiptNo}</Text>
+                <View style={styles.dashedLine} />
+                <Text style={{fontSize: 13}}>Mijoz: {showReceipt?.customer}</Text>
+                <Text style={{fontSize: 12, color: T.textD}}>{showReceipt?.date} {showReceipt?.time}</Text>
+                <View style={styles.dashedLine} />
+                <ScrollView style={{maxHeight: 200}}>
+                  {showReceipt?.items.map((it: any, i: number) => (
+                    <View key={i} style={{flexDirection: 'row', justifyContent: 'space-between', marginVertical: 4}}>
+                      <Text style={{fontSize: 12}}>{it.productName} x{it.qty}</Text>
+                      <Text style={{fontSize: 12, fontWeight: '700'}}>{fmt(it.total)}</Text>
+                    </View>
+                  ))}
+                </ScrollView>
+                <View style={styles.dashedLine} />
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', marginVertical: 8}}>
+                  <Text style={{fontSize: 16, fontWeight: '800'}}>JAMI:</Text>
+                  <Text style={{fontSize: 16, fontWeight: '800', color: T.accent}}>{fmt(showReceipt?.total)}</Text>
+                </View>
+                <Button title="Yopish" onPress={() => setShowReceipt(null)} style={{marginTop: 20}} />
+              </View>
+            </View>
+          </Modal>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -294,15 +291,14 @@ const styles = StyleSheet.create({
   cartSection: { 
     borderTopLeftRadius: 24, 
     borderTopRightRadius: 24, 
-    marginHorizontal: 0, 
-    marginBottom: 0,
     backgroundColor: '#fff',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 15,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 10,
     padding: 20,
-    maxHeight: '50%'
+    flex: 1,
   },
   cartTitle: { fontSize: 18, fontWeight: '800', marginBottom: 12 },
   emptyCart: { textAlign: 'center', color: T.textD, paddingVertical: 20 },
