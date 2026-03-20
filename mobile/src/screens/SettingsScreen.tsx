@@ -87,7 +87,7 @@ export function SettingsScreen() {
                 Login: {currentUser?.login} • Rol: <Text style={{color: T.accent, fontWeight: '700', textTransform: 'capitalize'}}>{currentUser?.role}</Text>
               </Text>
             </View>
-            <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
+            <TouchableOpacity style={styles.logoutBtn} onPress={() => logout()}>
               <Text style={{color: T.red, fontWeight: '700'}}>Chiqish</Text>
             </TouchableOpacity>
           </View>
@@ -108,7 +108,7 @@ export function SettingsScreen() {
                   <View key={u.id} style={styles.userRow}>
                     <View style={{flex: 1}}>
                       <Text style={{fontWeight: '700', fontSize: 15}}>{u.name}</Text>
-                      <Text style={{fontSize: 12, color: T.textD}}>{u.login} / {u.pass}</Text>
+                      <Text style={{fontSize: 12, color: T.textD}}>{u.login} / ••••••••</Text>
                     </View>
                     <View style={{alignItems: 'flex-end', gap: 6}}>
                       <View style={[styles.roleBadge, {backgroundColor: u.role === 'admin' ? T.redLight : T.blueLight}]}>
