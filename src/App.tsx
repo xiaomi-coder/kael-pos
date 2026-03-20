@@ -11,15 +11,25 @@ import {
 } from './pages';
 
 export default function App() {
-  const { currentUser, loginUser, loginPass, setLoginUser, setLoginPass, loginError, handleLogin, logout, isLoggingIn } = useAuth();
+  const { currentUser, loginUser, loginPass, setLoginUser, setLoginPass, loginError, handleLogin, logout, isLoggingIn, isRestoring, restoreSession } = useAuth();
   const [activeTab, setActiveTab] = useState("dashboard");
   const { fetchData, isLoading } = useStorage();
+
+  useEffect(() => {
+    // Restore existing Supabase auth session on page load
+    restoreSession();
+  }, []);
 
   useEffect(() => {
     if (currentUser) {
       fetchData();
     }
   }, [currentUser, fetchData]);
+
+  // Show blank screen while checking for existing session (prevents login flash)
+  if (isRestoring) {
+    return <div style={{ minHeight: "100vh", background: T.bg }} />;
+  }
 
   if (!currentUser) {
     return (
@@ -77,7 +87,7 @@ export default function App() {
           <h1 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>{TABS.find(t => t.id === activeTab)?.label}</h1>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ fontSize: 13, fontWeight: 600, color: T.textM, display: "none" }}>{getToday()}</span> {/* hide today on mobile if tight */}
-            <button style={{ ...S.sBtnS, borderColor: T.red, color: T.red, padding: "8px 12px", fontSize: 12 }} onClick={logout}>Chiqish</button>
+            <button style={{ ...S.sBtnS, borderColor: T.red, color: T.red, padding: "8px 12px", fontSize: 12 }} onClick={() => logout()}>Chiqish</button>
           </div>
         </div>
         

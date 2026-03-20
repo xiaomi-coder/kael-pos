@@ -8,11 +8,13 @@ interface AuthState {
   loginPass: string;
   loginError: string;
   isLoggingIn: boolean;
-  
+  isRestoring: boolean;
+
   setLoginUser: (val: string) => void;
   setLoginPass: (val: string) => void;
   handleLogin: () => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
+  restoreSession: () => Promise<void>;
 }
 
 export const useAuth = create<AuthState>((set, get) => ({
@@ -21,36 +23,68 @@ export const useAuth = create<AuthState>((set, get) => ({
   loginPass: "",
   loginError: "",
   isLoggingIn: false,
+  isRestoring: true,
 
   setLoginUser: (val) => set({ loginUser: val }),
   setLoginPass: (val) => set({ loginPass: val }),
-  
+
+  restoreSession: async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('users')
+          .select('*')
+          .eq('auth_id', session.user.id)
+          .maybeSingle();
+        if (profile) {
+          set({ currentUser: profile as User });
+        }
+      }
+    } finally {
+      set({ isRestoring: false });
+    }
+  },
+
   handleLogin: async () => {
     const { loginUser, loginPass } = get();
     if (!loginUser || !loginPass) {
       set({ loginError: "Login va parolni kiriting!" });
       return;
     }
-
     set({ isLoggingIn: true, loginError: "" });
-    
+
     try {
-      const { data, error } = await supabase
+      const email = `${loginUser.toLowerCase()}@kael.local`;
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password: loginPass,
+      });
+
+      if (authError || !authData.user) {
+        set({ loginError: "Login yoki parol noto'g'ri!", isLoggingIn: false });
+        return;
+      }
+
+      const { data: profile } = await supabase
         .from('users')
         .select('*')
-        .eq('login', loginUser)
-        .eq('pass', loginPass)
+        .eq('auth_id', authData.user.id)
         .maybeSingle();
 
-      if (data) { 
-        set({ currentUser: data as User, loginError: "", loginPass: "", isLoggingIn: false }); 
-      } else { 
-        set({ loginError: "Login yoki parol noto'g'ri!", isLoggingIn: false }); 
+      if (profile) {
+        set({ currentUser: profile as User, loginError: "", loginPass: "", isLoggingIn: false });
+      } else {
+        await supabase.auth.signOut();
+        set({ loginError: "Foydalanuvchi profili topilmadi!", isLoggingIn: false });
       }
     } catch (err) {
-      set({ loginError: "Tizimga ulanishda xatolik yuz berdi! Tarmoqni tekshiring.", isLoggingIn: false });
+      set({ loginError: "Tizimga ulanishda xatolik! Tarmoqni tekshiring.", isLoggingIn: false });
     }
   },
 
-  logout: () => set({ currentUser: null, loginUser: "", loginPass: "" }),
+  logout: async () => {
+    await supabase.auth.signOut();
+    set({ currentUser: null, loginUser: "", loginPass: "" });
+  },
 }));

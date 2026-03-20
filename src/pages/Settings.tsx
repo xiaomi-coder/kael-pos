@@ -107,7 +107,7 @@ export const SettingsPage = () => {
                   {users.map(u => (
                     <tr key={u.id} style={{ borderBottom: `1px solid ${T.borderLight}` }}>
                       <td style={{ padding: "12px", fontWeight: 700 }}>{u.name}</td>
-                      <td style={{ padding: "12px", color: T.textD }}>{u.login} / {u.pass}</td>
+                      <td style={{ padding: "12px", color: T.textD }}>{u.login} / {'•'.repeat(8)}</td>
                       <td style={{ padding: "12px" }}>
                         <span style={{ background: u.role === 'admin' ? T.redLight : T.blueLight, color: u.role === 'admin' ? T.red : T.blue, padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>
                           {u.role}

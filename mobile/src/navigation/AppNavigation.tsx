@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { LayoutDashboard, ShoppingCart, Package, Wallet, BadgeMinus } from 'lucide-react-native';
 
 import { LoginScreen } from '../screens/LoginScreen';
@@ -12,6 +12,7 @@ import { SalesScreen } from '../screens/SalesScreen';
 import { ExpensesScreen } from '../screens/ExpensesScreen';
 import { DebtsScreen } from '../screens/DebtsScreen';
 import { useAuth } from '../hooks/useAuth';
+import { useStorage } from '../hooks/useStorage';
 import { T } from '../constants/theme';
 
 const Stack = createNativeStackNavigator();
@@ -45,7 +46,39 @@ function MainTabNavigator() {
 }
 
 export default function AppNavigation() {
-  const { currentUser } = useAuth();
+  const { currentUser, isRestoring, restoreSession } = useAuth();
+  const { fetchData, isLoading } = useStorage();
+
+  // Restore existing Supabase session on app start
+  useEffect(() => {
+    restoreSession();
+  }, []);
+
+  // Load data after login
+  useEffect(() => {
+    if (currentUser) {
+      fetchData();
+    }
+  }, [currentUser, fetchData]);
+
+  // Show spinner while restoring session
+  if (isRestoring) {
+    return (
+      <View style={{ flex: 1, backgroundColor: T.bg, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color={T.accent} />
+      </View>
+    );
+  }
+
+  // Show loading screen while fetching data after login
+  if (currentUser && isLoading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: T.bg, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color={T.accent} />
+        <Text style={{ color: T.textM, fontSize: 16, fontWeight: '600', marginTop: 16 }}>Ma'lumotlar yuklanmoqda...</Text>
+      </View>
+    );
+  }
 
   return (
     <NavigationContainer>

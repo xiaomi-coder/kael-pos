@@ -17,6 +17,9 @@ export const SalesPage = () => {
   const [cashAmount, setCashAmount] = useState("");
   const [prodSearch, setProdSearch] = useState("");
   const [showReceipt, setShowReceipt] = useState<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const esc = (s: string) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
   const filteredProds = prodSearch ? products.filter(p => p.name.toLowerCase().includes(prodSearch.toLowerCase())) : products;
 
@@ -41,8 +44,9 @@ export const SalesPage = () => {
   const cartOriginal = cart.reduce((s, c) => s + c.price * c.qty, 0);
   const cartDiscountTotal = cartOriginal - cartTotal;
 
-  const handleCheckout = () => {
-    if (cart.length === 0) return;
+  const handleCheckout = async () => {
+    if (cart.length === 0 || isSubmitting) return;
+    setIsSubmitting(true);
     const custName = isOneTime ? (oneTimeName || "Birmartalik") : (customers.find(c => c.id === Number(saleCustomerId))?.name || "");
     const custPhone = isOneTime ? "" : (customers.find(c => c.id === Number(saleCustomerId))?.phone || "");
     const custId = isOneTime ? 0 : Number(saleCustomerId);
@@ -65,9 +69,10 @@ export const SalesPage = () => {
     const time = nowTime();
     
     const newSales = cart.map((item, i) => {
+      const maxId = sales.length > 0 ? Math.max(...sales.map(s => s.id)) : 0;
       const ratio = item.total / cartTotal;
       return {
-        id: sales.length + i + 1, date: today, time,
+        id: (sales.length > 0 ? Math.max(...sales.map(s => s.id)) : 0) + i + 1, date: today, time,
         productId: item.productId, productName: item.productName,
         customerId: custId, customerName: custName,
         qty: item.qty, price: item.price, unitPrice: item.unitPrice, cost: item.cost,
@@ -134,6 +139,7 @@ ${customerObj.balance - debtAmt < 0 ? `❗ <b>Sizning umumiy qarzingiz: ${fmt(Ma
     });
     setCart([]); setSaleCustomerId(""); setIsOneTime(false); setOneTimeName("");
     setPaymentType("naqd"); setCashAmount(""); setProdSearch("");
+    setIsSubmitting(false);
   };
 
   return (
@@ -246,7 +252,7 @@ ${customerObj.balance - debtAmt < 0 ? `❗ <b>Sizning umumiy qarzingiz: ${fmt(Ma
               </div>
             )}
             
-            <button style={{ ...S.sBtn, width: "100%", padding: 15, fontSize: 16, opacity: cart.length ? 1 : 0.4, borderRadius: 14 }} onClick={handleCheckout} disabled={!cart.length}>Sotuvni tasdiqlash</button>
+            <button style={{ ...S.sBtn, width: "100%", padding: 15, fontSize: 16, opacity: (cart.length && !isSubmitting) ? 1 : 0.4, borderRadius: 14 }} onClick={handleCheckout} disabled={!cart.length || isSubmitting}>{isSubmitting ? "Saqlanmoqda..." : "Sotuvni tasdiqlash"}</button>
           </div>
         </div>
       </div>
@@ -274,12 +280,12 @@ ${customerObj.balance - debtAmt < 0 ? `❗ <b>Sizning umumiy qarzingiz: ${fmt(Ma
                 if (w) {
                   w.document.write(`<html><head><title>Chek</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:monospace;font-size:12px;padding:16px;max-width:320px;margin:0 auto}.center{text-align:center}.line{border-top:1px dashed #000;margin:8px 0}.row{display:flex;justify-content:space-between;padding:2px 0}.bold{font-weight:bold}.big{font-size:16px}@media print{button{display:none}}</style></head><body>
                     <div class="center bold big">KAEL POS</div><div class="center" style="font-size:10px;margin-top:4px">Qurilish materiallari</div><div class="line"></div>
-                    <div class="row"><span>Chek:</span><span class="bold">${showReceipt.receiptNo}</span></div>
-                    <div class="row"><span>Sana:</span><span>${showReceipt.date} ${showReceipt.time}</span></div>
-                    <div class="row"><span>Mijoz:</span><span>${showReceipt.customer}</span></div>
-                    ${showReceipt.phone ? `<div class="row"><span>Tel:</span><span>${showReceipt.phone}</span></div>` : ""}
+                    <div class="row"><span>Chek:</span><span class="bold">${esc(showReceipt.receiptNo)}</span></div>
+                    <div class="row"><span>Sana:</span><span>${esc(showReceipt.date)} ${esc(showReceipt.time)}</span></div>
+                    <div class="row"><span>Mijoz:</span><span>${esc(showReceipt.customer)}</span></div>
+                    ${showReceipt.phone ? `<div class="row"><span>Tel:</span><span>${esc(showReceipt.phone)}</span></div>` : ""}
                     <div class="line"></div>
-                    ${showReceipt.items.map((it:any) => `<div style="padding:3px 0"><div class="bold">${it.productName}</div><div class="row"><span>${it.qty} x ${fmt(it.unitPrice)}</span><span class="bold">${fmt(it.total)}</span></div></div>`).join("")}
+                    ${showReceipt.items.map((it:any) => `<div style="padding:3px 0"><div class="bold">${esc(it.productName)}</div><div class="row"><span>${it.qty} x ${fmt(it.unitPrice)}</span><span class="bold">${fmt(it.total)}</span></div></div>`).join("")}
                     <div class="line"></div>
                     ${showReceipt.discount > 0 ? `<div class="row"><span>Chegirma:</span><span>-${fmt(showReceipt.discount)}</span></div>` : ""}
                     <div class="row bold big"><span>JAMI:</span><span>${fmt(showReceipt.total)} so'm</span></div><div class="line"></div>
