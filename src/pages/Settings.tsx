@@ -60,18 +60,23 @@ export const SettingsPage = () => {
 
   const callManageUser = async (method: string, body?: object, id?: number) => {
     const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error('Sessiya topilmadi — qayta kiring (login)');
+    }
     const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-user${id ? `?id=${id}` : ''}`;
     const res = await fetch(url, {
       method,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session?.access_token}`,
+        'Authorization': `Bearer ${session.access_token}`,
         'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
       },
       body: body ? JSON.stringify(body) : undefined,
     });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'Xatolik yuz berdi');
+    const text = await res.text();
+    let json: any;
+    try { json = JSON.parse(text); } catch { throw new Error(`Server javobi: ${res.status} — ${text.slice(0, 200)}`); }
+    if (!res.ok) throw new Error(json.error || `Xatolik (${res.status}): ${text.slice(0, 200)}`);
     return json;
   };
 
