@@ -221,7 +221,9 @@ export const SettingsPage = () => {
 
       <Modal show={showUserModal} onClose={() => { setShowUserModal(false); setUserError(""); }} title={editUser ? "Foydalanuvchini tahrirlash" : "Yangi foydalanuvchi"}>
         <FL label="F.I.SH"><input style={S.sInput} value={userForm.name} onChange={e => setUserForm({ ...userForm, name: e.target.value })} autoFocus /></FL>
-        <FL label="Login (Kirish uchun)"><input style={S.sInput} value={userForm.login} onChange={e => setUserForm({ ...userForm, login: e.target.value })} /></FL>
+        <FL label="Login (Kirish uchun)">
+          <input style={S.sInput} value={userForm.login} onChange={e => setUserForm({ ...userForm, login: e.target.value.replace('@kael.local', '').replace(/\s/g, '') })} placeholder="masalan: ali" />
+        </FL>
         <FL label={editUser ? "Yangi parol (o'zgartirmasangiz bo'sh qoldiring)" : "Parol"}>
           <input style={S.sInput} value={userForm.pass} onChange={e => setUserForm({ ...userForm, pass: e.target.value })} type="password" autoComplete="new-password" />
         </FL>
