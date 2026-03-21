@@ -1,5 +1,6 @@
 export interface User {
   id: number;
+  auth_id?: string;
   login: string;
   pass: string;
   name: string;

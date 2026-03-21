@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useStorage } from '../hooks/useStorage';
 import { useAuth } from '../hooks/useAuth';
+import { supabase } from '../lib/supabase';
 import * as S from '../styles';
 import { T, TABS } from '../constants';
 import { fmt, exportToCSV } from '../utils';
 import { IBtn, Modal, FL } from '../components';
 
 export const SettingsPage = () => {
-  const { tgBotToken, tgChatId, setTgBotToken, setTgChatId, products, customers, activityLog, resetStorage, users, setUsers } = useStorage();
+  const { tgBotToken, tgChatId, setTgBotToken, setTgChatId, products, customers, activityLog, resetStorage, users, setUsers, fetchUsers } = useStorage();
   const { currentUser, logout } = useAuth();
 
   const [botTokenInput, setBotTokenInput] = useState(tgBotToken);
@@ -15,6 +16,8 @@ export const SettingsPage = () => {
   const [showUserModal, setShowUserModal] = useState(false);
   const [editUser, setEditUser] = useState<any>(null);
   const [userForm, setUserForm] = useState<any>({ login: "", pass: "", name: "", role: "sotuvchi", permissions: [] });
+  const [userSaving, setUserSaving] = useState(false);
+  const [userError, setUserError] = useState("");
 
   useEffect(() => {
     setBotTokenInput(tgBotToken);
@@ -55,18 +58,65 @@ export const SettingsPage = () => {
     });
   };
 
-  const handleSaveUser = () => {
-    if (!userForm.login || !userForm.pass || !userForm.name) return;
-    if (editUser && editUser.role === 'admin' && userForm.role !== 'admin') {
-      alert("Asosiy admin rolini o'zgartirib bo'lmaydi."); return;
+  const callManageUser = async (method: string, body?: object, id?: number) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/manage-user${id ? `?id=${id}` : ''}`;
+    const res = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token}`,
+        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Xatolik yuz berdi');
+    return json;
+  };
+
+  const handleSaveUser = async () => {
+    if (!userForm.name || !userForm.login) { setUserError("Ism va login majburiy"); return; }
+    if (!editUser && !userForm.pass) { setUserError("Parol majburiy"); return; }
+
+    setUserSaving(true);
+    setUserError("");
+    try {
+      if (editUser) {
+        await callManageUser('PUT', {
+          login: userForm.login,
+          pass: userForm.pass || undefined,
+          name: userForm.name,
+          role: userForm.role,
+          permissions: userForm.permissions,
+        }, editUser.id);
+      } else {
+        await callManageUser('POST', {
+          login: userForm.login,
+          pass: userForm.pass,
+          name: userForm.name,
+          role: userForm.role,
+          permissions: userForm.permissions,
+        });
+      }
+      await fetchUsers();
+      setShowUserModal(false);
+    } catch (err: any) {
+      setUserError(err.message);
+    } finally {
+      setUserSaving(false);
     }
-    
-    if (editUser) {
-      setUsers(prev => prev.map(u => u.id === editUser.id ? { ...u, ...userForm } : u));
-    } else {
-      setUsers(prev => [...prev, { id: Math.max(0, ...prev.map(x => x.id)) + 1, ...userForm }]);
+  };
+
+  const handleDeleteUser = async (u: any) => {
+    if (u.role === 'admin') { alert("Admin akkauntini o'chirib bo'lmaydi"); return; }
+    if (!confirm(`"${u.name}" xodimni o'chirasizmi? Bu amalni qaytarib bo'lmaydi.`)) return;
+    try {
+      await callManageUser('DELETE', undefined, u.id);
+      await fetchUsers();
+    } catch (err: any) {
+      alert(`Xatolik: ${err.message}`);
     }
-    setShowUserModal(false);
   };
 
   return (
@@ -89,7 +139,7 @@ export const SettingsPage = () => {
           <div style={{ ...S.sCard, marginBottom: 20 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
               <h3 style={{ margin: 0, fontSize: 18, color: T.text }}>Foydalanuvchilar va Rollar</h3>
-              <button style={S.sBtnS} onClick={() => { setEditUser(null); setUserForm({ login: "", pass: "", name: "", role: "sotuvchi", permissions: ['sales', 'history', 'customers'] }); setShowUserModal(true); }}>+ Yangi xodim</button>
+              <button style={S.sBtnS} onClick={() => { setUserError(""); setEditUser(null); setUserForm({ login: "", pass: "", name: "", role: "sotuvchi", permissions: ['sales', 'history', 'customers'] }); setShowUserModal(true); }}>+ Yangi xodim</button>
             </div>
             
             <div style={{ overflowX: "auto" }}>
@@ -116,8 +166,11 @@ export const SettingsPage = () => {
                       <td style={{ padding: "12px", color: T.textD, fontSize: 11 }}>
                         {u.role === 'admin' ? "Barcha ruxsatlar" : (u.permissions || []).map((p: string) => TABS.find(t=>t.id===p)?.label).join(", ")}
                       </td>
-                      <td style={{ padding: "12px", textAlign: "right" }}>
-                        <IBtn color={T.blue} onClick={() => { setEditUser(u); setUserForm({ ...u, permissions: u.permissions || [] }); setShowUserModal(true); }}>✎</IBtn>
+                      <td style={{ padding: "12px", textAlign: "right", display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                        <IBtn color={T.blue} onClick={() => { setUserError(""); setEditUser(u); setUserForm({ ...u, pass: "", permissions: u.permissions || [] }); setShowUserModal(true); }}>✎</IBtn>
+                        {u.role !== 'admin' && (
+                          <IBtn color={T.red} onClick={() => handleDeleteUser(u)}>✕</IBtn>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -166,10 +219,12 @@ export const SettingsPage = () => {
         </>
       )}
 
-      <Modal show={showUserModal} onClose={() => setShowUserModal(false)} title={editUser ? "Foydalanuvchini tahrirlash" : "Yangi foydalanuvchi"}>
+      <Modal show={showUserModal} onClose={() => { setShowUserModal(false); setUserError(""); }} title={editUser ? "Foydalanuvchini tahrirlash" : "Yangi foydalanuvchi"}>
         <FL label="F.I.SH"><input style={S.sInput} value={userForm.name} onChange={e => setUserForm({ ...userForm, name: e.target.value })} autoFocus /></FL>
         <FL label="Login (Kirish uchun)"><input style={S.sInput} value={userForm.login} onChange={e => setUserForm({ ...userForm, login: e.target.value })} /></FL>
-        <FL label="Parol"><input style={S.sInput} value={userForm.pass} onChange={e => setUserForm({ ...userForm, pass: e.target.value })} /></FL>
+        <FL label={editUser ? "Yangi parol (o'zgartirmasangiz bo'sh qoldiring)" : "Parol"}>
+          <input style={S.sInput} value={userForm.pass} onChange={e => setUserForm({ ...userForm, pass: e.target.value })} type="password" autoComplete="new-password" />
+        </FL>
         
         {editUser?.role !== 'admin' && ( // Don't let them demote the main admin or change admin perms
           <>
@@ -199,7 +254,18 @@ export const SettingsPage = () => {
           </>
         )}
         
-        <button style={{ ...S.sBtn, width: "100%", padding: 14, marginTop: 10, borderRadius: 14 }} onClick={handleSaveUser}>Saqlash</button>
+        {userError && (
+          <div style={{ background: T.redLight, color: T.red, padding: "10px 14px", borderRadius: 10, fontSize: 13, marginBottom: 4 }}>
+            {userError}
+          </div>
+        )}
+        <button
+          style={{ ...S.sBtn, width: "100%", padding: 14, marginTop: 10, borderRadius: 14, opacity: userSaving ? 0.6 : 1, cursor: userSaving ? 'not-allowed' : 'pointer' }}
+          onClick={handleSaveUser}
+          disabled={userSaving}
+        >
+          {userSaving ? "Saqlanmoqda..." : "Saqlash"}
+        </button>
       </Modal>
 
     </div>
