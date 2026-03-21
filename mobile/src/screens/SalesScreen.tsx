@@ -8,9 +8,10 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { fmt, getToday, nowTime, sendTelegram } from '../utils';
+import { sendDevSMS, buildSmsText } from '../utils/devsms';
 
 export function SalesScreen() {
-  const { products, customers, sales, setSales, setProducts, setCustomers, logActivity, tgBotToken, tgChatId } = useStorage();
+  const { products, customers, sales, setSales, setProducts, setCustomers, logActivity, tgBotToken, tgChatId, smsApiToken, smsSignature } = useStorage();
   const { currentUser } = useAuth();
   
   const [cart, setCart] = useState<any[]>([]);
@@ -94,6 +95,12 @@ export function SalesScreen() {
     const tgMsg = `🛒 <b>YANGI SOTUV</b>\n\n👤 Mijoz: <b>${custName}</b>${custPhone ? "\n📱 " + custPhone : ""}\n📅 ${today} ${time}\n👷 Sotuvchi: ${currentUser?.name}\n\n📦 Tovarlar:\n${itemsList}\n\n💰 <b>JAMI: ${fmt(cartTotal)} so'm</b>\n💵 Naqd: ${fmt(paidAmt)} so'm${debtAmt > 0 ? `\n📋 Nasiya: ${fmt(debtAmt)} so'm` : ""}\n📊 Foyda: ${fmt(cartProfit)} so'm`;
     
     if (tgBotToken && tgChatId) sendTelegram(tgBotToken, tgChatId, tgMsg);
+
+    // Send SMS to customer's phone
+    if (smsApiToken && custPhone && !isOneTime) {
+      const smsText = buildSmsText(custName, cart, cartTotal, paidAmt, debtAmt, smsSignature);
+      sendDevSMS(smsApiToken, custPhone, smsText);
+    }
 
     setShowReceipt({
       date: today, time, customer: custName, phone: custPhone,

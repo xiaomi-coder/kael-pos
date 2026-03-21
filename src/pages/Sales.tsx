@@ -4,9 +4,10 @@ import { useAuth } from '../hooks/useAuth';
 import * as S from '../styles';
 import { T } from '../constants';
 import { fmt, getToday, nowTime, sendTelegram } from '../utils';
+import { sendDevSMS, buildSmsText } from '../utils/devsms';
 
 export const SalesPage = () => {
-  const { products, customers, sales, setSales, setProducts, setCustomers, logActivity, tgBotToken, tgChatId } = useStorage();
+  const { products, customers, sales, setSales, setProducts, setCustomers, logActivity, tgBotToken, tgChatId, smsApiToken, smsSignature } = useStorage();
   const { currentUser } = useAuth();
   
   const [cart, setCart] = useState<any[]>([]);
@@ -130,6 +131,12 @@ ${customerObj.balance - debtAmt < 0 ? `❗ <b>Sizning umumiy qarzingiz: ${fmt(Ma
 <i>KAEL POS — Boshqaruv Tizimi orqali yuborildi. Kunning xayrli o'tishini tilaymiz!</i>`;
        
        sendTelegram(tgBotToken, customerObj.tgId, directMsg);
+    }
+
+    // Send SMS to customer's phone if smsApiToken + phone available
+    if (smsApiToken && custPhone && !isOneTime) {
+      const smsText = buildSmsText(custName, cart, cartTotal, paidAmt, debtAmt, smsSignature);
+      sendDevSMS(smsApiToken, custPhone, smsText);
     }
 
     setShowReceipt({

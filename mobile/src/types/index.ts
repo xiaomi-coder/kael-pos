@@ -98,4 +98,6 @@ export interface StoreData {
   activityLog: ActivityLog[];
   tgBotToken: string;
   tgChatId: string;
+  smsApiToken: string;
+  smsSignature: string;
 }

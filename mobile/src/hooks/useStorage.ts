@@ -52,6 +52,8 @@ interface StorageState extends StoreData {
   
   setTgBotToken: (token: string) => Promise<void>;
   setTgChatId: (id: string) => Promise<void>;
+  setSmsApiToken: (token: string) => Promise<void>;
+  setSmsSignature: (sig: string) => Promise<void>;
   
   getTotalDebt: () => number;
   getTotalDealerDebt: () => number;
@@ -71,6 +73,8 @@ export const useStorage = create<StorageState>((set, get) => ({
   activityLog: [],
   tgBotToken: "",
   tgChatId: "",
+  smsApiToken: "",
+  smsSignature: "Mirzo Sement",
   isLoading: true,
 
   fetchData: async () => {
@@ -124,7 +128,12 @@ export const useStorage = create<StorageState>((set, get) => ({
   fetchSettings: async () => {
     const { data } = await supabase.from('settings').select('*').eq('id', 1).maybeSingle();
     if (data) {
-      set({ tgBotToken: data.tgBotToken || '', tgChatId: data.tgChatId || '' });
+      set({ 
+        tgBotToken: data.tgBotToken || '', 
+        tgChatId: data.tgChatId || '',
+        smsApiToken: data.smsApiToken || '',
+        smsSignature: data.smsSignature || 'Mirzo Sement',
+      });
     }
   },
 
@@ -199,6 +208,14 @@ export const useStorage = create<StorageState>((set, get) => ({
   setTgChatId: async (id) => {
     await supabase.from('settings').upsert({ id: 1, tgChatId: id });
     set({ tgChatId: id });
+  },
+  setSmsApiToken: async (token) => {
+    await supabase.from('settings').upsert({ id: 1, smsApiToken: token });
+    set({ smsApiToken: token });
+  },
+  setSmsSignature: async (sig) => {
+    await supabase.from('settings').upsert({ id: 1, smsSignature: sig });
+    set({ smsSignature: sig });
   },
 
   getTotalDebt: () => {

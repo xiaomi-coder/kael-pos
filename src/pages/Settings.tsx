@@ -8,11 +8,13 @@ import { fmt, exportToCSV } from '../utils';
 import { IBtn, Modal, FL } from '../components';
 
 export const SettingsPage = () => {
-  const { tgBotToken, tgChatId, setTgBotToken, setTgChatId, products, customers, activityLog, resetStorage, users, setUsers, fetchUsers } = useStorage();
+  const { tgBotToken, tgChatId, setTgBotToken, setTgChatId, smsApiToken, smsSignature, setSmsApiToken, setSmsSignature, products, customers, activityLog, resetStorage, users, setUsers, fetchUsers } = useStorage();
   const { currentUser, logout } = useAuth();
 
   const [botTokenInput, setBotTokenInput] = useState(tgBotToken);
   const [chatIdInput, setChatIdInput] = useState(tgChatId);
+  const [smsTokenInput, setSmsTokenInput] = useState(smsApiToken);
+  const [smsSigInput, setSmsSigInput] = useState(smsSignature);
   const [showUserModal, setShowUserModal] = useState(false);
   const [editUser, setEditUser] = useState<any>(null);
   const [userForm, setUserForm] = useState<any>({ login: "", pass: "", name: "", role: "sotuvchi", permissions: [] });
@@ -22,7 +24,9 @@ export const SettingsPage = () => {
   useEffect(() => {
     setBotTokenInput(tgBotToken);
     setChatIdInput(tgChatId);
-  }, [tgBotToken, tgChatId]);
+    setSmsTokenInput(smsApiToken);
+    setSmsSigInput(smsSignature);
+  }, [tgBotToken, tgChatId, smsApiToken, smsSignature]);
 
 
   const saveTg = () => {
@@ -192,6 +196,16 @@ export const SettingsPage = () => {
               <div><label style={{ display: "block", fontSize: 12, color: T.textM, marginBottom: 6, fontWeight: 600 }}>Asosiy Chat ID</label><input style={S.sInput} value={chatIdInput} onChange={e => setChatIdInput(e.target.value)} placeholder="Misol: -1001234567890" /></div>
             </div>
             <button style={S.sBtn} onClick={saveTg}>Saqlash</button>
+          </div>
+
+          <div style={{ ...S.sCard, marginBottom: 20 }}>
+            <h3 style={{ margin: "0 0 16px", fontSize: 18, display: "flex", alignItems: "center", gap: 8 }}><span style={{ color: T.green }}>💬</span> DevSMS (SMS Xabarnoma)</h3>
+            <p style={{ fontSize: 13, color: T.textD, marginBottom: 16 }}>Har bir xaridda mijozning telefon raqamiga avtomatik SMS yuborish. API tokenni DevSMS dashboard'dan oling.</p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+              <div><label style={{ display: "block", fontSize: 12, color: T.textM, marginBottom: 6, fontWeight: 600 }}>DevSMS API Token</label><input style={S.sInput} value={smsTokenInput} onChange={e => setSmsTokenInput(e.target.value)} placeholder="df5d70dbc65be..." /></div>
+              <div><label style={{ display: "block", fontSize: 12, color: T.textM, marginBottom: 6, fontWeight: 600 }}>SMS Imzo (biznes nomi)</label><input style={S.sInput} value={smsSigInput} onChange={e => setSmsSigInput(e.target.value)} placeholder="Mirzo Sement" /></div>
+            </div>
+            <button style={S.sBtn} onClick={() => { setSmsApiToken(smsTokenInput); setSmsSignature(smsSigInput); alert('SMS sozlamalari saqlandi!'); }}>Saqlash</button>
           </div>
 
           <div style={{ ...S.sCard, marginBottom: 20 }}>
