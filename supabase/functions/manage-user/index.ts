@@ -220,12 +220,9 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Delete auth user first (if linked) — non-fatal if auth user is already gone
-      if (target.auth_id) {
-        await adminClient.auth.admin.deleteUser(target.auth_id).catch(() => {});
-      }
+      const authIdToDelete = target.auth_id;
 
-      // Delete from users table
+      // Delete from users table FIRST (removes FK reference to auth.users)
       const { error: deleteErr } = await adminClient
         .from('users')
         .delete()
@@ -235,6 +232,17 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: deleteErr.message }), {
           status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
+      }
+
+      // Now delete from Supabase Auth (no FK blocking since users row is gone)
+      if (authIdToDelete) {
+        const { error: authDelErr } = await adminClient.auth.admin.deleteUser(authIdToDelete);
+        if (authDelErr) {
+          // User row is already deleted, auth cleanup failed — log but don't fail
+          return new Response(JSON.stringify({ success: true, warning: 'Auth akkaunt tozalanmadi: ' + authDelErr.message }), {
+            status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
       }
 
       return new Response(JSON.stringify({ success: true }), {
