@@ -220,14 +220,9 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Delete auth user first (if linked)
+      // Delete auth user first (if linked) — non-fatal if auth user is already gone
       if (target.auth_id) {
-        const { error: deleteAuthErr } = await adminClient.auth.admin.deleteUser(target.auth_id);
-        if (deleteAuthErr) {
-          return new Response(JSON.stringify({ error: deleteAuthErr.message }), {
-            status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
+        await adminClient.auth.admin.deleteUser(target.auth_id).catch(() => {});
       }
 
       // Delete from users table
