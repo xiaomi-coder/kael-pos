@@ -20,7 +20,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.mobile"
+      "package": "com.anonymous.mobile",
+      "permissions": ["android.permission.SEND_SMS", "android.permission.READ_PHONE_STATE"]
     },
     "web": {
       "output": "static",

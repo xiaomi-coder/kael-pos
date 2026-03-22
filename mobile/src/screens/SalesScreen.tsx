@@ -103,12 +103,10 @@ export function SalesScreen() {
       sendDevSMS(smsApiToken, custPhone, smsText);
     }
 
-    // SMS via phone's own SIM card (expo-sms) — works without API
+    // SMS via phone's own SIM card (native silent SMS) — automatic, no API needed
     if (custPhone && !isOneTime) {
-      const custBalance = customers.find((c: any) => c.id === custId)?.balance || 0;
-      const totalDebt = Math.abs(Math.min(0, custBalance - debtAmt));
-      const simText = formatSalesSmsText(custName, cartTotal, paidAmt, debtAmt, totalDebt);
-      // Non-blocking background send — opens SMS compose if needed
+      const totalDebt = Math.abs(Math.min(0, (customers.find((c: any) => c.id === custId)?.balance || 0) - debtAmt));
+      const simText = formatSalesSmsText(custName, cartTotal, paidAmt, debtAmt, totalDebt, smsSignature || 'Do\'kon');
       sendSimSms(custPhone, simText).catch(() => {});
     }
 

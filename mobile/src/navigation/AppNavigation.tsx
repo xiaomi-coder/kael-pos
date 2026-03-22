@@ -14,6 +14,7 @@ import { DebtsScreen } from '../screens/DebtsScreen';
 import { useAuth } from '../hooks/useAuth';
 import { useStorage } from '../hooks/useStorage';
 import { T } from '../constants/theme';
+import { requestSmsPermission } from '../utils/simSms';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -58,6 +59,8 @@ export default function AppNavigation() {
   useEffect(() => {
     if (currentUser) {
       fetchData();
+      // Request SMS permission once after login
+      requestSmsPermission().catch(() => {});
     }
   }, [currentUser, fetchData]);
 
