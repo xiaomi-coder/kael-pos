@@ -1,12 +1,5 @@
 import { PermissionsAndroid, Platform } from 'react-native';
 import * as SMS from 'expo-sms';
-// Native module — available after EAS build (not in Expo Go)
-let SilentSmsNative: { sendSMS: (p: string, m: string) => Promise<void>; checkPermission: () => Promise<boolean> } | null = null;
-try {
-  const { SilentSmsNative: mod } = require('silent-sms/src/index');
-  SilentSmsNative = mod;
-} catch {}
-
 
 /**
  * Request SEND_SMS permission from the user (Android only).
@@ -31,37 +24,22 @@ export async function requestSmsPermission(): Promise<boolean> {
 }
 
 /**
- * Send SMS silently using native Android SmsManager (no compose dialog).
- * Falls back to expo-sms compose if native module unavailable.
+ * Send SMS using expo-sms (uses device's SIM card).
+ * On Android: sends via native SMS compose UI (one tap from user).
  */
 export async function sendSimSms(phone: string, message: string): Promise<boolean> {
   if (Platform.OS !== 'android') return false;
-  const cleanPhone = phone.replace(/\s+/g, '');
-
-  // 1️⃣ Try native silent SMS (no UI needed)
-  if (SilentSmsNative) {
-    try {
-      const hasPermission = await SilentSmsNative.checkPermission();
-      if (hasPermission) {
-        await SilentSmsNative.sendSMS(cleanPhone, message);
-        return true;
-      }
-    } catch (e) {
-      console.log('[SilentSMS] native error, fallback:', e);
-    }
-  }
-
-  // 2️⃣ Fallback: expo-sms compose (one-tap required)
   try {
     const available = await SMS.isAvailableAsync();
-    if (available) {
-      await SMS.sendSMSAsync([cleanPhone], message);
-      return true;
-    }
+    if (!available) return false;
+    const cleanPhone = phone.replace(/\s+/g, '');
+    const { result } = await SMS.sendSMSAsync([cleanPhone], message);
+    // On Android, result is always 'unknown' — treat as success
+    return result !== 'cancelled';
   } catch (e) {
-    console.log('[SilentSMS] expo-sms error:', e);
+    console.log('[SimSMS] error:', e);
+    return false;
   }
-  return false;
 }
 
 /**

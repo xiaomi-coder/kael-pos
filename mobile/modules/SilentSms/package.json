@@ -1,6 +1,0 @@
-{
-  "name": "silent-sms",
-  "version": "1.0.0",
-  "description": "Silent Android SMS via native SmsManager",
-  "main": "src/index.ts"
-}
