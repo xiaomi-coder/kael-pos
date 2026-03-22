@@ -1,18 +1,23 @@
-// DevSMS.uz API integration — 15 so'm/SMS via device
+// DevSMS.uz integration — routed through Supabase Edge Function to avoid CORS
+import { supabase } from '../lib/supabase';
+
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
+
 export async function sendDevSMS(apiToken: string, phone: string, message: string) {
   if (!apiToken || !phone) return;
-  // Normalize phone: strip +, spaces → 998XXXXXXXXX format
-  const normalized = phone.replace(/\D/g, '');
-  if (normalized.length < 9) return;
-  
+
   try {
-    await fetch('https://devsms.uz/api/send_sms.php', {
+    const { data: { session } } = await supabase.auth.getSession();
+
+    await fetch(`${SUPABASE_URL}/functions/v1/send-sms`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiToken}`,
+        'Authorization': `Bearer ${session?.access_token || ''}`,
+        'apikey': SUPABASE_ANON_KEY,
       },
-      body: JSON.stringify({ phone: normalized, message }),
+      body: JSON.stringify({ phone, message, apiToken }),
     });
   } catch (e) {
     console.error('DevSMS error:', e);

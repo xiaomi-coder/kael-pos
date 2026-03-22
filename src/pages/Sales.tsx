@@ -207,7 +207,7 @@ ${customerObj.balance - debtAmt < 0 ? `❗ <b>Sizning umumiy qarzingiz: ${fmt(Ma
                         <div style={{ color: T.textD, fontSize: 10, fontWeight: 600, marginBottom: 3 }}>SONI</div>
                         <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
                           <button onClick={() => updateCartQty(item.productId, item.qty - 1)} style={{ width: 26, height: 26, borderRadius: 7, background: T.card, border: `1px solid ${T.border}`, cursor: "pointer", fontSize: 14 }}>−</button>
-                          <input type="number" value={item.qty} onChange={e => updateCartQty(item.productId, Number(e.target.value))} style={{ ...S.sInput, width: 40, textAlign: "center", padding: "4px 2px", fontSize: 13, fontWeight: 700 }} />
+                          <input type="number" value={item.qty} onChange={e => updateCartQty(item.productId, Number(e.target.value))} style={{ ...S.sInput, width: 70, textAlign: "center", padding: "4px 2px", fontSize: 13, fontWeight: 700 }} />
                           <button onClick={() => updateCartQty(item.productId, item.qty + 1)} style={{ width: 26, height: 26, borderRadius: 7, background: T.card, border: `1px solid ${T.border}`, cursor: "pointer", fontSize: 14 }}>+</button>
                         </div>
 
