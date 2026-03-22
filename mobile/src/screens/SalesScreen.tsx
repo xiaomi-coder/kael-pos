@@ -9,6 +9,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { fmt, getToday, nowTime, sendTelegram } from '../utils';
 import { sendDevSMS, buildSmsText } from '../utils/devsms';
+import { sendSimSms, formatSalesSmsText } from '../utils/simSms';
 
 export function SalesScreen() {
   const { products, customers, sales, setSales, setProducts, setCustomers, logActivity, tgBotToken, tgChatId, smsApiToken, smsSignature } = useStorage();
@@ -96,10 +97,19 @@ export function SalesScreen() {
     
     if (tgBotToken && tgChatId) sendTelegram(tgBotToken, tgChatId, tgMsg);
 
-    // Send SMS to customer's phone
+    // SMS to customer (DevSMS API — if configured)
     if (smsApiToken && custPhone && !isOneTime) {
       const smsText = buildSmsText(custName, cart, cartTotal, paidAmt, debtAmt, smsSignature);
       sendDevSMS(smsApiToken, custPhone, smsText);
+    }
+
+    // SMS via phone's own SIM card (expo-sms) — works without API
+    if (custPhone && !isOneTime) {
+      const custBalance = customers.find((c: any) => c.id === custId)?.balance || 0;
+      const totalDebt = Math.abs(Math.min(0, custBalance - debtAmt));
+      const simText = formatSalesSmsText(custName, cartTotal, paidAmt, debtAmt, totalDebt);
+      // Non-blocking background send — opens SMS compose if needed
+      sendSimSms(custPhone, simText).catch(() => {});
     }
 
     setShowReceipt({
