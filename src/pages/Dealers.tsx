@@ -20,7 +20,7 @@ export const DealersPage = () => {
   const [editDealer, setEditDealer] = useState<any>(null);
   
   const [dealerForm, setDealerForm] = useState({ name: "", phone: "", address: "" });
-  const [txnForm, setTxnForm] = useState({ dealerId: "", type: "purchase", amount: "", description: "", products: "" });
+  const [txnForm, setTxnForm] = useState({ dealerId: "", type: "purchase", amount: "", totalAmount: "", cashPaid: "", description: "", products: "" });
   
   const [selectedDealer, setSelectedDealer] = useState("");
   const filteredTxns = selectedDealer ? dealerTxns.filter(t => t.dealerId === Number(selectedDealer)) : dealerTxns;
@@ -84,22 +84,50 @@ export const DealersPage = () => {
 
   const handleTxnSave = () => {
     const dId = Number(txnForm.dealerId);
-    const amt = Number(txnForm.amount);
-    if (!dId || amt <= 0) return;
+    if (!dId) return;
     
     const dealer = dealers.find(d => d.id === dId);
     if (!dealer) return;
 
-    setDealers(prev => prev.map(d => d.id === dId ? { ...d, balance: d.balance + (txnForm.type === "purchase" ? -amt : amt) } : d));
-    setDealerTxns(prev => [{
-      id: Math.max(0, ...prev.map(x => x.id)) + 1,
-      dealerId: dId, type: txnForm.type as 'purchase' | 'payment', amount: amt,
-      description: txnForm.description, products: txnForm.products,
-      date: getToday(), time: nowTime(), user: currentUser?.name || "?"
-    }, ...prev]);
-    
-    logActivity(currentUser?.name || "?", `Diller amaliyoti: ${dealer.name} — ${txnForm.type === "purchase" ? "Yuk olindi" : "Pul berildi"} ${fmt(amt)}`, getToday(), nowTime());
-    setTxnForm({ dealerId: "", type: "purchase", amount: "", description: "", products: "" }); 
+    const today = getToday();
+    const time = nowTime();
+
+    if (txnForm.type === 'purchase') {
+      const total = Number(txnForm.totalAmount);
+      const cash = Number(txnForm.cashPaid) || 0;
+      const debt = total - cash;
+      if (total <= 0) return;
+
+      // Net balance change: total debt minus any upfront cash
+      setDealers(prev => prev.map(d => d.id === dId ? { ...d, balance: d.balance - debt } : d));
+
+      // One transaction record summarizing the purchase
+      const desc = cash > 0
+        ? `Jami: ${fmt(total)} | Naqd: ${fmt(cash)} | Qarz: ${fmt(debt)}`
+        : `Jami: ${fmt(total)} | To'liq qarz`;
+
+      setDealerTxns(prev => [{
+        id: Math.max(0, ...prev.map(x => x.id)) + 1,
+        dealerId: dId, type: 'purchase', amount: total,
+        description: desc, products: txnForm.products,
+        date: today, time, user: currentUser?.name || "?"
+      }, ...prev]);
+
+      logActivity(currentUser?.name || "?", `Diller yuk: ${dealer.name} — ${fmt(total)} (naqd ${fmt(cash)}, qarz ${fmt(debt)})`, today, time);
+    } else {
+      const amt = Number(txnForm.amount);
+      if (amt <= 0) return;
+      setDealers(prev => prev.map(d => d.id === dId ? { ...d, balance: d.balance + amt } : d));
+      setDealerTxns(prev => [{
+        id: Math.max(0, ...prev.map(x => x.id)) + 1,
+        dealerId: dId, type: 'payment', amount: amt,
+        description: txnForm.description, products: '',
+        date: today, time, user: currentUser?.name || "?"
+      }, ...prev]);
+      logActivity(currentUser?.name || "?", `Diller to'lov: ${dealer.name} — ${fmt(amt)}`, today, time);
+    }
+
+    setTxnForm({ dealerId: "", type: "purchase", amount: "", totalAmount: "", cashPaid: "", description: "", products: "" });
     setShowTxnModal(false);
   };
 
@@ -200,15 +228,53 @@ export const DealersPage = () => {
         </FL>
         <FL label="Amaliyot turi">
           <div style={{ display: "flex", gap: 10 }}>
-            <button style={{ ...S.sBtnS, flex: 1, padding: "10px", background: txnForm.type === "purchase" ? T.redLight : "transparent", color: txnForm.type === "purchase" ? T.red : T.textM, borderColor: txnForm.type === "purchase" ? T.red : T.border }} onClick={() => setTxnForm({ ...txnForm, type: "purchase" })}>Yuk olindi (Qarz)</button>
-            <button style={{ ...S.sBtnS, flex: 1, padding: "10px", background: txnForm.type === "payment" ? T.greenLight : "transparent", color: txnForm.type === "payment" ? T.green : T.textM, borderColor: txnForm.type === "payment" ? T.green : T.border }} onClick={() => setTxnForm({ ...txnForm, type: "payment" })}>Pul berildi (To'lov)</button>
+            <button style={{ ...S.sBtnS, flex: 1, padding: "10px", background: txnForm.type === "purchase" ? T.redLight : "transparent", color: txnForm.type === "purchase" ? T.red : T.textM, borderColor: txnForm.type === "purchase" ? T.red : T.border }} onClick={() => setTxnForm({ ...txnForm, type: "purchase" })}>🧾 Yuk olindi</button>
+            <button style={{ ...S.sBtnS, flex: 1, padding: "10px", background: txnForm.type === "payment" ? T.greenLight : "transparent", color: txnForm.type === "payment" ? T.green : T.textM, borderColor: txnForm.type === "payment" ? T.green : T.border }} onClick={() => setTxnForm({ ...txnForm, type: "payment" })}>💵 Pul berildi</button>
           </div>
         </FL>
-        <FL label="Summa / Qiymat"><input type="number" style={S.sInput} value={txnForm.amount} onChange={e => setTxnForm({ ...txnForm, amount: e.target.value })} /></FL>
+
         {txnForm.type === "purchase" ? (
-          <FL label="Olingan mahsulotlar"><input style={S.sInput} placeholder="Masalan: 5t sement, 2t armatura..." value={txnForm.products} onChange={e => setTxnForm({ ...txnForm, products: e.target.value })} /></FL>
+          <>
+            <FL label="Tovar jami summasi">
+              <input type="number" style={S.sInput} value={txnForm.totalAmount}
+                onChange={e => setTxnForm({ ...txnForm, totalAmount: e.target.value })}
+                placeholder="5,000,000" autoFocus />
+            </FL>
+            <FL label="Naqd to'lov (bo'lmasa bo'sh qoldiring)">
+              <input type="number" style={S.sInput} value={txnForm.cashPaid}
+                onChange={e => setTxnForm({ ...txnForm, cashPaid: e.target.value })}
+                placeholder="3,300,000" />
+            </FL>
+            {/* Auto-calculated debt preview */}
+            {Number(txnForm.totalAmount) > 0 && (
+              <div style={{ background: T.redLight, border: `1px solid ${T.red}30`, borderRadius: 10, padding: "12px 16px", marginBottom: 8 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
+                  <span style={{ color: T.textM }}>Jami tovar:</span>
+                  <span style={{ fontWeight: 700 }}>{fmt(Number(txnForm.totalAmount))}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
+                  <span style={{ color: T.green }}>Naqd to'lov:</span>
+                  <span style={{ fontWeight: 700, color: T.green }}>− {fmt(Number(txnForm.cashPaid) || 0)}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: 15, borderTop: `1px solid ${T.border}`, paddingTop: 8, marginTop: 4 }}>
+                  <span style={{ color: T.red, fontWeight: 700 }}>Qarz bo'ladi:</span>
+                  <span style={{ fontWeight: 800, color: T.red }}>{fmt(Math.max(0, Number(txnForm.totalAmount) - (Number(txnForm.cashPaid) || 0)))}</span>
+                </div>
+              </div>
+            )}
+            <FL label="Olingan mahsulotlar">
+              <input style={S.sInput} placeholder="Masalan: 5t sement, 2t armatura..." value={txnForm.products} onChange={e => setTxnForm({ ...txnForm, products: e.target.value })} />
+            </FL>
+          </>
         ) : (
-          <FL label="Izoh"><input style={S.sInput} placeholder="Naqd, Plastik, dollar..." value={txnForm.description} onChange={e => setTxnForm({ ...txnForm, description: e.target.value })} /></FL>
+          <>
+            <FL label="To'lov summasi">
+              <input type="number" style={S.sInput} value={txnForm.amount} onChange={e => setTxnForm({ ...txnForm, amount: e.target.value })} autoFocus />
+            </FL>
+            <FL label="Izoh">
+              <input style={S.sInput} placeholder="Naqd, Plastik, dollar..." value={txnForm.description} onChange={e => setTxnForm({ ...txnForm, description: e.target.value })} />
+            </FL>
+          </>
         )}
         <button style={{ ...S.sBtn, width: "100%", padding: 14, marginTop: 10, borderRadius: 14 }} onClick={handleTxnSave}>Saqlash</button>
       </Modal>
