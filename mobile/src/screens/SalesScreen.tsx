@@ -184,7 +184,7 @@ export function SalesScreen() {
                           style={{ padding: 0, fontSize: 13, fontWeight: '700', color: T.accent, minWidth: 40 }}
                           keyboardType="numeric"
                           value={String(Math.floor(item.qty / item.packSize))}
-                          onChangeText={(t) => updateCartQty(item.productId, (Number(t) || 0) * item.packSize + (item.qty % item.packSize))}
+                          onChangeText={(t) => updateCartQty(item.productId, (Number(t) || 0) * item.packSize)}
                         />
                       </View>
                     )}

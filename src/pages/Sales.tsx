@@ -213,7 +213,7 @@ ${customerObj.balance - debtAmt < 0 ? `❗ <b>Sizning umumiy qarzingiz: ${fmt(Ma
                         {item.packSize > 1 && (
                           <div style={{ display: "flex", gap: 2, alignItems: "center", marginTop: 6, padding: "4px 6px", background: T.accentLight, borderRadius: 6, border: `1px solid ${T.accent}` }}>
                             <span style={{ fontSize: 10, color: T.accent, fontWeight: 800 }}>QOP:</span>
-                            <input type="number" value={Math.floor(item.qty / item.packSize)} onChange={e => updateCartQty(item.productId, Number(e.target.value) * item.packSize + (item.qty % item.packSize))} style={{ ...S.sInput, flex: 1, minWidth: 40, textAlign: "center", padding: "2px", fontSize: 13, fontWeight: 800, border: "none", background: "transparent", color: T.accent }} />
+                            <input type="number" value={Math.floor(item.qty / item.packSize)} onChange={e => updateCartQty(item.productId, Number(e.target.value) * item.packSize)} style={{ ...S.sInput, flex: 1, minWidth: 40, textAlign: "center", padding: "2px", fontSize: 13, fontWeight: 800, border: "none", background: "transparent", color: T.accent }} />
                           </div>
                         )}
                       </div>
