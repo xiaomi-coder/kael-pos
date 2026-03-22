@@ -23,6 +23,7 @@ export const DealersPage = () => {
   const [txnForm, setTxnForm] = useState({ dealerId: "", type: "purchase", amount: "", totalAmount: "", cashPaid: "", description: "", products: "" });
   
   const [selectedDealer, setSelectedDealer] = useState("");
+  const [showStatementDealer, setShowStatementDealer] = useState<any>(null);
   const filteredTxns = selectedDealer ? dealerTxns.filter(t => t.dealerId === Number(selectedDealer)) : dealerTxns;
   const filteredProds = prodSearch ? products.filter(p => p.name.toLowerCase().includes(prodSearch.toLowerCase())) : products;
 
@@ -157,6 +158,7 @@ export const DealersPage = () => {
                 <div style={{ fontSize: 12, color: T.textD }}>{d.phone}</div>
               </div>
               <div style={{ display: "flex", gap: 6 }}>
+                <IBtn color={T.accent} onClick={() => setShowStatementDealer(d)}>📊</IBtn>
                 <IBtn color={T.green} onClick={() => { setKirimDealerId(String(d.id)); setShowKirimModal(true); }}>📥</IBtn>
                 <IBtn color={T.blue} onClick={() => { setDealerForm({ name: d.name, phone: d.phone, address: d.address }); setEditDealer(d); setShowDealerModal(true); }}>✎</IBtn>
                 <IBtn color={T.red} onClick={() => {
@@ -335,6 +337,80 @@ export const DealersPage = () => {
 
         <button style={{ ...S.sBtn, width: "100%", padding: 14, marginTop: 10, borderRadius: 14, opacity: kirimCart.length ? 1 : 0.5 }} onClick={handleKirimSave} disabled={!kirimCart.length}>Tasdiqlash va Kirim Qilish</button>
       </Modal>
+
+      {/* ── DEALER STATEMENT MODAL ── */}
+      {showStatementDealer && (() => {
+        const d = showStatementDealer;
+        const txns = dealerTxns
+          .filter(t => t.dealerId === d.id)
+          .sort((a, b) => a.date.localeCompare(b.date) || (a.time || '').localeCompare(b.time || ''));
+
+        // compute running balance for each txn
+        let running = 0;
+        const rows = txns.map(t => {
+          if (t.type === 'purchase') running -= t.amount;
+          else running += t.amount;
+          return { ...t, running };
+        }).reverse(); // newest first
+
+        const totalTaken = txns.filter(t => t.type === 'purchase').reduce((s, t) => s + t.amount, 0);
+        const totalPaid  = txns.filter(t => t.type === 'payment').reduce((s, t) => s + t.amount, 0);
+
+        return (
+          <Modal show onClose={() => setShowStatementDealer(null)} title={`${d.name} — Hisobi`}>
+            {/* Summary */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 16 }}>
+              <div style={{ background: T.redLight, borderRadius: 10, padding: '10px 14px', textAlign: 'center' }}>
+                <div style={{ fontSize: 10, color: T.red, fontWeight: 700 }}>JAMI YUK OLDI</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: T.red }}>{fmt(totalTaken)}</div>
+              </div>
+              <div style={{ background: T.greenLight, borderRadius: 10, padding: '10px 14px', textAlign: 'center' }}>
+                <div style={{ fontSize: 10, color: T.green, fontWeight: 700 }}>JAMI TO'LADI</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: T.green }}>{fmt(totalPaid)}</div>
+              </div>
+              <div style={{ background: d.balance < 0 ? T.redLight : T.greenLight, borderRadius: 10, padding: '10px 14px', textAlign: 'center' }}>
+                <div style={{ fontSize: 10, color: d.balance < 0 ? T.red : T.green, fontWeight: 700 }}>JORIY QARZ</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: d.balance < 0 ? T.red : T.green }}>{fmt(Math.abs(d.balance))}</div>
+              </div>
+            </div>
+
+            {/* Transaction rows */}
+            <div style={{ maxHeight: 380, overflowY: 'auto', borderRadius: 10, border: `1px solid ${T.border}` }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: T.cardAlt, position: 'sticky', top: 0 }}>
+                    {['Sana', 'Turi', 'Summa', 'Izoh', 'Qoldiq'].map(h =>
+                      <th key={h} style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 700, color: T.textM, fontSize: 11, textTransform: 'uppercase' }}>{h}</th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map(t => (
+                    <tr key={t.id} style={{ borderBottom: `1px solid ${T.borderLight}`, background: t.type === 'payment' ? '#F0FDF4' : 'transparent' }}>
+                      <td style={{ padding: '10px 12px', color: T.textD, whiteSpace: 'nowrap' }}>{t.date}<br/><span style={{ fontSize: 10 }}>{t.time}</span></td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <span style={{ padding: '3px 8px', borderRadius: 20, fontSize: 11, fontWeight: 700,
+                          background: t.type === 'purchase' ? T.redLight : T.greenLight,
+                          color: t.type === 'purchase' ? T.red : T.green }}>
+                          {t.type === 'purchase' ? '📦 Yuk oldi' : '💵 To\'ladi'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '10px 12px', fontWeight: 800, color: t.type === 'purchase' ? T.red : T.green }}>
+                        {t.type === 'purchase' ? '-' : '+'}{fmt(t.amount)}
+                      </td>
+                      <td style={{ padding: '10px 12px', color: T.textM, fontSize: 11, maxWidth: 180 }}>{t.description || t.products || '—'}</td>
+                      <td style={{ padding: '10px 12px', fontWeight: 700, color: t.running < 0 ? T.red : T.green }}>
+                        {fmt(Math.abs(t.running))} {t.running < 0 ? '🔴' : '🟢'}
+                      </td>
+                    </tr>
+                  ))}
+                  {rows.length === 0 && <tr><td colSpan={5} style={{ padding: 20, textAlign: 'center', color: T.textD }}>Hali amaliyotlar yo'q</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </Modal>
+        );
+      })()}
     </div>
   );
 };
