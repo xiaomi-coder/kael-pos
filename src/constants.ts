@@ -9,6 +9,18 @@ export const EXPENSE_CATEGORIES = [
   { id: "boshqa", label: "Boshqa", icon: "📦", color: "#57534E" },
 ];
 
+export const VEHICLE_EXPENSE_CATS = [
+  { id: "metan", label: "Metan (gaz)", icon: "⛽", color: "#2563EB" },
+  { id: "benzin", label: "Benzin/Dizel", icon: "🛢", color: "#EA580C" },
+  { id: "tamirlash", label: "Ta'mirlash", icon: "🔧", color: "#7C3AED" },
+  { id: "shina", label: "Shina / G'ildirak", icon: "⭕", color: "#DC2626" },
+  { id: "balon", label: "Balon o'rnatish", icon: "🔩", color: "#0D9488" },
+  { id: "texosmotr", label: "Texosmotr", icon: "📋", color: "#57534E" },
+  { id: "yuvish", label: "Yuvish", icon: "🚿", color: "#059669" },
+  { id: "v_boshqa", label: "Boshqa", icon: "📦", color: "#A8A29E" },
+  { id: "v_daromad", label: "Daromad (tashish)", icon: "💰", color: "#059669" },
+];
+
 export const TABS = [
   { id: "dashboard", label: "Boshqaruv", icon: "◉" },
   { id: "sales", label: "Sotuv", icon: "⊕" },

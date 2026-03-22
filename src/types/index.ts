@@ -58,6 +58,7 @@ export interface Expense {
   date: string;
   time?: string;
   user: string;
+  vehiclePlate?: string;
 }
 
 export interface Dealer {
