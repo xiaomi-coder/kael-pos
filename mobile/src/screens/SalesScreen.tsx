@@ -177,17 +177,7 @@ export function SalesScreen() {
                       <View style={{flex: 1}}/>
                       <Text style={styles.cartItemTotal}>{fmt(item.total)}</Text>
                     </View>
-                    {item.packSize > 1 && (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, padding: 6, backgroundColor: T.accentLight, borderRadius: 8, borderWidth: 1, borderColor: T.accent }}>
-                        <Text style={{ fontSize: 11, color: T.accent, fontWeight: '800', marginRight: 6 }}>QOP:</Text>
-                        <TextInput 
-                          style={{ padding: 0, fontSize: 13, fontWeight: '700', color: T.accent, minWidth: 40 }}
-                          keyboardType="numeric"
-                          value={String(Math.floor(item.qty / item.packSize))}
-                          onChangeText={(t) => updateCartQty(item.productId, (Number(t) || 0) * item.packSize)}
-                        />
-                      </View>
-                    )}
+
                   </View>
                 ))}
               </View>
