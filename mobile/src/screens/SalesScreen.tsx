@@ -179,9 +179,19 @@ export function SalesScreen() {
                       </TouchableOpacity>
                     </View>
                     <View style={styles.cartItemControls}>
-                      <TouchableOpacity onPress={() => updateCartQty(item.productId, item.qty - 1)} style={styles.qtyBtn}><Text style={{fontWeight:'700'}}>-</Text></TouchableOpacity>
-                      <Text style={styles.qtyText}>{item.qty}</Text>
-                      <TouchableOpacity onPress={() => updateCartQty(item.productId, item.qty + 1)} style={styles.qtyBtn}><Text style={{fontWeight:'700'}}>+</Text></TouchableOpacity>
+                      <TouchableOpacity onPress={() => updateCartQty(item.productId, item.qty - 1)} style={styles.qtyBtn}><Text style={{fontWeight:'700', fontSize: 18}}>-</Text></TouchableOpacity>
+                      <TextInput
+                        style={styles.qtyInput}
+                        value={String(item.qty)}
+                        keyboardType="numeric"
+                        selectTextOnFocus
+                        onChangeText={t => {
+                          const n = parseInt(t, 10);
+                          if (!isNaN(n) && n > 0) updateCartQty(item.productId, n);
+                          else if (t === '') updateCartQty(item.productId, 1);
+                        }}
+                      />
+                      <TouchableOpacity onPress={() => updateCartQty(item.productId, item.qty + 1)} style={styles.qtyBtn}><Text style={{fontWeight:'700', fontSize: 18}}>+</Text></TouchableOpacity>
                       <View style={{flex: 1}}/>
                       <Text style={styles.cartItemTotal}>{fmt(item.total)}</Text>
                     </View>
@@ -313,8 +323,8 @@ const styles = StyleSheet.create({
   cartItemHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   cartItemName: { fontWeight: '600', fontSize: 13, flex: 1 },
   cartItemControls: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  qtyBtn: { width: 30, height: 30, backgroundColor: '#fff', borderRadius: 8, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: T.border },
-  qtyText: { fontSize: 16, fontWeight: '700' },
+  qtyBtn: { width: 34, height: 34, backgroundColor: '#fff', borderRadius: 8, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: T.border },
+  qtyInput: { width: 44, height: 34, borderWidth: 1.5, borderColor: T.accent, borderRadius: 8, textAlign: 'center', fontSize: 16, fontWeight: '700', color: T.text, backgroundColor: '#fff' },
   cartItemTotal: { fontSize: 15, fontWeight: '800', color: T.accent },
 
   checkoutBox: { borderTopWidth: 1, borderTopColor: T.border, paddingTop: 16 },
