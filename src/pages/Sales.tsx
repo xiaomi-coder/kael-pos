@@ -26,8 +26,8 @@ export const SalesPage = () => {
 
   const addToCart = (prod: any) => {
     const exists = cart.find(c => c.productId === prod.id);
-    if (exists) setCart(cart.map(c => c.productId === prod.id ? { ...c, qty: c.qty + 1, total: (c.qty + 1) * c.unitPrice } : c));
-    else setCart([...cart, { productId: prod.id, productName: prod.name, qty: 1, price: prod.price, unitPrice: prod.price, cost: prod.cost, discount: 0, total: prod.price, unit: prod.unit, packSize: prod.packSize }]);
+    // If already in cart, don't auto-increment — user uses input/+/- buttons
+    if (!exists) setCart([...cart, { productId: prod.id, productName: prod.name, qty: 1, price: prod.price, unitPrice: prod.price, cost: prod.cost, discount: 0, total: prod.price, unit: prod.unit, packSize: prod.packSize }]);
   };
   const updateCartQty = (pid: number, qty: number) => { if (qty < 1) return removeFromCart(pid); setCart(cart.map(c => c.productId === pid ? { ...c, qty, total: qty * c.unitPrice } : c)); };
   const updateCartDiscount = (pid: number, disc: string) => {
@@ -205,10 +205,10 @@ ${customerObj.balance - debtAmt < 0 ? `❗ <b>Sizning umumiy qarzingiz: ${fmt(Ma
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, fontSize: 11 }}>
                       <div>
                         <div style={{ color: T.textD, fontSize: 10, fontWeight: 600, marginBottom: 3 }}>SONI</div>
-                        <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
-                          <button onClick={() => updateCartQty(item.productId, item.qty - 1)} style={{ width: 26, height: 26, borderRadius: 7, background: T.card, border: `1px solid ${T.border}`, cursor: "pointer", fontSize: 14 }}>−</button>
-                          <input type="number" value={item.qty} onFocus={e => e.target.select()} onChange={e => updateCartQty(item.productId, Number(e.target.value))} style={{ ...S.sInput, width: 70, textAlign: "center", padding: "4px 2px", fontSize: 13, fontWeight: 700 }} />
-                          <button onClick={() => updateCartQty(item.productId, item.qty + 1)} style={{ width: 26, height: 26, borderRadius: 7, background: T.card, border: `1px solid ${T.border}`, cursor: "pointer", fontSize: 14 }}>+</button>
+                        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                          <button onClick={() => updateCartQty(item.productId, item.qty - 1)} style={{ width: 30, height: 34, borderRadius: 8, background: T.card, border: `1px solid ${T.border}`, cursor: "pointer", fontSize: 18, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                          <input type="text" inputMode="numeric" value={item.qty} onFocus={e => (e.target as HTMLInputElement).select()} onChange={e => { const n = parseInt(e.target.value, 10); if (!isNaN(n) && n > 0) updateCartQty(item.productId, n); }} style={{ ...S.sInput, width: 90, height: 34, textAlign: "center", padding: "4px 4px", fontSize: 17, fontWeight: 800, border: `2px solid ${T.accent}`, borderRadius: 8, boxSizing: 'border-box' }} />
+                          <button onClick={() => updateCartQty(item.productId, item.qty + 1)} style={{ width: 30, height: 34, borderRadius: 8, background: T.card, border: `1px solid ${T.border}`, cursor: "pointer", fontSize: 18, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
                         </div>
 
                       </div>

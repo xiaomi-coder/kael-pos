@@ -323,8 +323,8 @@ const styles = StyleSheet.create({
   cartItemHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   cartItemName: { fontWeight: '600', fontSize: 13, flex: 1 },
   cartItemControls: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  qtyBtn: { width: 34, height: 34, backgroundColor: '#fff', borderRadius: 8, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: T.border },
-  qtyInput: { width: 44, height: 34, borderWidth: 1.5, borderColor: T.accent, borderRadius: 8, textAlign: 'center', fontSize: 16, fontWeight: '700', color: T.text, backgroundColor: '#fff' },
+  qtyBtn: { width: 38, height: 38, backgroundColor: '#fff', borderRadius: 10, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: T.border },
+  qtyInput: { width: 80, height: 38, borderWidth: 2, borderColor: T.accent, borderRadius: 10, textAlign: 'center', fontSize: 18, fontWeight: '800', color: T.text, backgroundColor: '#fff', paddingHorizontal: 4 },
   cartItemTotal: { fontSize: 15, fontWeight: '800', color: T.accent },
 
   checkoutBox: { borderTopWidth: 1, borderTopColor: T.border, paddingTop: 16 },
