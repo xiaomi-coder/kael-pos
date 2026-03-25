@@ -146,11 +146,12 @@ export const useStorage = create<StorageState>((set, get) => ({
   },
 
   resetStorage: async () => {
-    const tables = ['sales', 'expenses', 'dealer_txns', 'activity_log', 'customers', 'dealers', 'products', 'users'];
+    // NOTE: 'users' is intentionally excluded — accounts must never be wiped
+    const tables = ['sales', 'expenses', 'dealer_txns', 'activity_log', 'customers', 'dealers', 'products'];
     for (const table of tables) {
       await supabase.from(table).delete().neq('id', 0);
     }
-    set({ products: [], customers: [], sales: [], expenses: [], dealers: [], dealerTxns: [], activityLog: [], users: [] });
+    set({ products: [], customers: [], sales: [], expenses: [], dealers: [], dealerTxns: [], activityLog: [] });
   },
   setProducts: async (updater) => {
     const oldItems = get().products;
